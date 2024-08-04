@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Elderly_Canteen.Data;
+using Elderly_Canteen.Data.Entities;
 namespace Elderly_Canteen.Data.Repos
 {
     namespace Elderly_Canteen.Data.Repos
     {
         public class GenericRepository<T> : IGenericRepository<T> where T : class
         {
-            private readonly CanteenContext _context;
+            private readonly ModelContext _context;
             private readonly DbSet<T> _dbSet;
 
-            public GenericRepository(CanteenContext context)
+            public GenericRepository(ModelContext context)
             {
                 _context = context;
                 _dbSet = context.Set<T>();

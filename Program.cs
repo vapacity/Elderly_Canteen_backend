@@ -1,6 +1,6 @@
 using Elderly_Canteen.Data.Repos.Elderly_Canteen.Data.Repos;
 using Elderly_Canteen.Data.Repos;
-using Elderly_Canteen.Data;
+using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<CanteenContext>(options =>
+builder.Services.AddDbContext<ModelContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 Console.WriteLine("Database Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
 
@@ -26,6 +26,7 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 
 //Register Services
 builder.Services.AddScoped<IAccountService, AccountService>();
+
 //builder.Services.AddScoped<IRegisteredServices, RegisteredServices>();
 
 // JWT Authentication

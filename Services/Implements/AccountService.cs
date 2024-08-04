@@ -30,7 +30,7 @@ namespace Elderly_Canteen.Services.Implements
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
             var account = await _accountRepository.GetAll()
-                .FirstOrDefaultAsync(a => a.PhoneNum == loginRequest.PhoneNum);
+                .FirstOrDefaultAsync(a => a.Phonenum == loginRequest.PhoneNum);
 
             if (account == null)
             {
@@ -59,8 +59,8 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     Token = token,
                     Role = account.Identity,
-                    Username = account.AccountName,
-                    Account_id = account.AccountId
+                    Username = account.Accountname,
+                    Account_id = account.Accountid
                 }
             };
         }
@@ -68,7 +68,7 @@ namespace Elderly_Canteen.Services.Implements
         {
             //手机号重复则说明用户存在
             var existingAccount = await _accountRepository.GetAll()
-                .FirstOrDefaultAsync(a => a.PhoneNum == registerRequestDto.Phone);
+                .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.Phone);
 
             if (existingAccount != null)
             {
@@ -81,13 +81,13 @@ namespace Elderly_Canteen.Services.Implements
 
             var newAccount = new Account
             {
-                AccountId = await GenerateAccountIdAsync(),
-                AccountName = registerRequestDto.Username,
+                Accountid = await GenerateAccountIdAsync(),
+                Accountname = registerRequestDto.Username,
                 Password = registerRequestDto.Password, // Note: You should hash the password here
-                PhoneNum = registerRequestDto.Phone,
+                Phonenum = registerRequestDto.Phone,
                 Identity = "user", //一开始默认为普通用户
                 Gender = registerRequestDto.Gender,
-                BirthDate = DateTime.TryParse(registerRequestDto.Birthdate, out var birthdate) ? birthdate : (DateTime?)null,
+                Birthdate = DateTime.TryParse(registerRequestDto.Birthdate, out var birthdate) ? birthdate : (DateTime?)null,
                 Portrait = registerRequestDto.Avatar
             };
 
@@ -117,13 +117,13 @@ namespace Elderly_Canteen.Services.Implements
                 msg = "获取成功",
                 response = new ResponseData
                 {
-                    accountId = account.AccountId,
-                    accountName = account.AccountName,
-                    phoneNum = account.PhoneNum,
+                    accountId = account.Accountid,
+                    accountName = account.Accountname,
+                    phoneNum = account.Phonenum,
                     identity = account.Identity,
                     portrait = account.Portrait,
                     gender = account.Gender,
-                    birthDate = account.BirthDate?.ToString("yyyy-MM-dd"),
+                    birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
                     name = account.Name
                 }
@@ -141,8 +141,8 @@ namespace Elderly_Canteen.Services.Implements
                     response = null
                 };
             }
-            account.AccountName = personInfo.accountName;
-            account.PhoneNum = personInfo.phoneNum;
+            account.Accountname = personInfo.accountName;
+            account.Phonenum = personInfo.phoneNum;
             account.Portrait = personInfo.portrait;
             account.Gender = personInfo.gender;
 
@@ -150,7 +150,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 if (DateTime.TryParse(personInfo.birthDate, out DateTime birthDate))
                 {
-                    account.BirthDate = birthDate;
+                    account.Birthdate = birthDate;
                 }
                 else
                 {
@@ -177,19 +177,19 @@ namespace Elderly_Canteen.Services.Implements
                 msg = "修改成功",
                 response = new ResponseData
                 {
-                    accountId = account.AccountId,
-                    accountName = account.AccountName,
-                    phoneNum = account.PhoneNum,
+                    accountId = account.Accountid,
+                    accountName = account.Accountname,
+                    phoneNum = account.Phonenum,
                     identity = account.Identity,
                     portrait = account.Portrait,
                     gender = account.Gender,
-                    birthDate = account.BirthDate.ToString(),
+                    birthDate = account.Birthdate.ToString(),
                     address = account.Address,
                     name = account.Name
                 }
             };
         }
-        /*以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用*/
+        //以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用
         private string GenerateJwtToken(Account account)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -198,7 +198,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.NameIdentifier, account.AccountId),
+                    new Claim(ClaimTypes.NameIdentifier, account.Accountid),
                     new Claim(ClaimTypes.Role, account.Identity),
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
@@ -216,9 +216,9 @@ namespace Elderly_Canteen.Services.Implements
 
             // Get the maximum existing AccountId that starts with the prefix
             var maxAccountId = await _accountRepository.GetAll()
-                .Where(a => a.AccountId.StartsWith(prefix))
-                .OrderByDescending(a => a.AccountId)
-                .Select(a => a.AccountId)
+                .Where(a => a.Accountid.StartsWith(prefix))
+                .OrderByDescending(a => a.Accountid)
+                .Select(a => a.Accountid)
                 .FirstOrDefaultAsync();
 
             if (maxAccountId == null)
@@ -244,9 +244,9 @@ namespace Elderly_Canteen.Services.Implements
             {
                 var response = new AccountDto
                 {
-                    ACCOUNT_ID = account.AccountId,
-                    ACCOUNT_NAME = account.AccountName,
-                    PHONE_NUM = account.PhoneNum,
+                    ACCOUNT_ID = account.Accountid,
+                    ACCOUNT_NAME = account.Accountname,
+                    PHONE_NUM = account.Phonenum,
                     IDENTITY = account.Identity,
                     PORTRAIT = account.Portrait,
                     GENDER = account.Gender,
