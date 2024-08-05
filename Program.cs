@@ -8,28 +8,38 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
-// 配置 Kestrel 服务器监听所有 IP
 
-// Add services to the container.
+// 添加 CORS 服务，允许所有来源
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+});
+
+// 添加控制器服务
 builder.Services.AddControllers();
 
+// 添加数据库上下文
 builder.Services.AddDbContext<ModelContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 Console.WriteLine("Database Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
 
-
-// Register the generic repository
+// 注册通用仓储服务
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
-//Register Services
+// 注册其他服务
 builder.Services.AddScoped<IAccountService, AccountService>();
 
-//builder.Services.AddScoped<IRegisteredServices, RegisteredServices>();
-
-// JWT Authentication
+// JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
 
@@ -54,6 +64,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// 添加 Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Elderly Canteen API", Version = "v1" });
@@ -82,7 +93,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 配置请求管道
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -93,9 +104,18 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// 使用转发头中间件
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+// 使用 CORS 中间件，允许所有来源
+app.UseCors("AllowAllOrigins");
+
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); // Add this line
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

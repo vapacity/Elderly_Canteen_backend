@@ -2,16 +2,16 @@
 {
     public class LoginResponseDto
     {
-        public bool Success { get; set; }
-        public string Msg { get; set; }
-        public ResponseData Response { get; set; }
+        public bool loginSuccess { get; set; }
+        public string msg { get; set; }
+        public ResponseData response { get; set; }
 
         public class ResponseData
         {
-            public string Token { get; set; }
-            public string Role { get; set; }
-            public string Username { get; set; }
-            public string Account_id {  get; set; }
+            public string token { get; set; }
+            public string identity { get; set; }
+            public string accountName { get; set; }
+            public string accountId {  get; set; }
         }
     }
 }

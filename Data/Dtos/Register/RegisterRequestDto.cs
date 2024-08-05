@@ -2,12 +2,12 @@
 {
     public class RegisterRequestDto
     {
-        public string Username { set; get; }
-        public string Password { set;get; }
-        public string Phone {  set;get; }
-        public string VerificationCode { set; get; }
-        public string Gender { set; get; }
-        public string? Birthdate { set;get; }
-        public string? Avatar { set;get; }
+        public string userName { set; get; }
+        public string password { set;get; }
+        public string phone {  set;get; }
+        public string verificationCode { set; get; }
+        public string gender { set; get; }
+        public string? birthDate { set;get; }
+        public string? avatar { set;get; }
     }
 }

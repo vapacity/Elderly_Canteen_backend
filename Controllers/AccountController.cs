@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Entities;
-
+/*
+ * 401
+ */
 namespace Elderly_Canteen.Controllers
 {
     [ApiController]
@@ -26,17 +28,18 @@ namespace Elderly_Canteen.Controllers
         {
             var loginResponse = await _accountService.LoginAsync(loginRequest);
 
-            if (!loginResponse.Success)
+            if (!loginResponse.loginSuccess)
             {
-                if (loginResponse.Msg == "Account does not exist")
+                if (loginResponse.msg == "Account does not exist")
                 {
                     return NotFound(loginResponse);
                 }
 
-                if (loginResponse.Msg == "Incorrect password")
+                if (loginResponse.msg == "Incorrect password")
                 {
                     return BadRequest(loginResponse);
                 }
+                return NotFound(loginResponse);
             }
 
             return Ok(loginResponse);
@@ -47,18 +50,18 @@ namespace Elderly_Canteen.Controllers
         {
             var result = await _accountService.RegisterAsync(registerRequestDto);
 
-            if (result.Msg == "用户已存在")
+            if (result.msg == "用户已存在")
             {
                 return BadRequest(new RegisterResponseDto
                 {
-                    Msg = result.Msg,
-                    Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    msg = result.msg,
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 });
             }
 
             return Ok(new RegisterResponseDto
             {
-                Msg = result.Msg
+                msg = result.msg
             });
         }
 

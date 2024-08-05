@@ -30,37 +30,37 @@ namespace Elderly_Canteen.Services.Implements
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
             var account = await _accountRepository.GetAll()
-                .FirstOrDefaultAsync(a => a.Phonenum == loginRequest.PhoneNum);
+                .FirstOrDefaultAsync(a => a.Phonenum == loginRequest.phoneNum);
 
             if (account == null)
             {
                 return new LoginResponseDto
                 {
-                    Success = false,
-                    Msg = "Account does not exist"
+                    loginSuccess = false,
+                    msg = "Account does not exist"
                 };
             }
 
-            if (account.Password != loginRequest.Password)
+            if (account.Password != loginRequest.password)
             {
                 return new LoginResponseDto
                 {
-                    Success = false,
-                    Msg = "Incorrect password"
+                    loginSuccess = false,
+                    msg = "Incorrect password"
                 };
             }
 
             var token = GenerateJwtToken(account);
             return new LoginResponseDto
             {
-                Success = true,
-                Msg = "Login successful",
-                Response = new LoginResponseDto.ResponseData
+                loginSuccess = true,
+                msg = "Login successful",
+                response = new LoginResponseDto.ResponseData
                 {
-                    Token = token,
-                    Role = account.Identity,
-                    Username = account.Accountname,
-                    Account_id = account.Accountid
+                    token = token,
+                    identity = account.Identity,
+                    accountName = account.Accountname,
+                    accountId = account.Accountid
                 }
             };
         }
@@ -68,33 +68,33 @@ namespace Elderly_Canteen.Services.Implements
         {
             //手机号重复则说明用户存在
             var existingAccount = await _accountRepository.GetAll()
-                .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.Phone);
+                .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.phone);
 
             if (existingAccount != null)
             {
                 return new RegisterResponseDto
                 {
-                    Msg = "用户已存在",
-                    Timestamp=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    msg = "用户已存在",
+                    timestamp=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 };
             }
 
             var newAccount = new Account
             {
                 Accountid = await GenerateAccountIdAsync(),
-                Accountname = registerRequestDto.Username,
-                Password = registerRequestDto.Password, // Note: You should hash the password here
-                Phonenum = registerRequestDto.Phone,
+                Accountname = registerRequestDto.userName,
+                Password = registerRequestDto.password, // Note: You should hash the password here
+                Phonenum = registerRequestDto.phone,
                 Identity = "user", //一开始默认为普通用户
-                Gender = registerRequestDto.Gender,
-                Birthdate = DateTime.TryParse(registerRequestDto.Birthdate, out var birthdate) ? birthdate : (DateTime?)null,
-                Portrait = registerRequestDto.Avatar
+                Gender = registerRequestDto.gender,
+                Birthdate = DateTime.TryParse(registerRequestDto.birthDate, out var birthdate) ? birthdate : (DateTime?)null,
+                Portrait = registerRequestDto.avatar
             };
-
+            
             await _accountRepository.AddAsync(newAccount);
             return new RegisterResponseDto
             {
-                Msg = "注册成功"
+                msg = "注册成功"
 
             };
         }
@@ -244,13 +244,13 @@ namespace Elderly_Canteen.Services.Implements
             {
                 var response = new AccountDto
                 {
-                    ACCOUNT_ID = account.Accountid,
-                    ACCOUNT_NAME = account.Accountname,
-                    PHONE_NUM = account.Phonenum,
-                    IDENTITY = account.Identity,
-                    PORTRAIT = account.Portrait,
-                    GENDER = account.Gender,
-                    PassWord = account.Password
+                    accountId = account.Accountid,
+                    accountName= account.Accountname,
+                    phoneNum = account.Phonenum,
+                    identity = account.Identity,
+                    portrait = account.Portrait,
+                    gender = account.Gender,
+                    password = account.Password
                 };
 
                 responseList.Add(response);

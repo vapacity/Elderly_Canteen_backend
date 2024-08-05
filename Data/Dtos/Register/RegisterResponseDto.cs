@@ -2,7 +2,10 @@
 {
     public class RegisterResponseDto
     {
-        public string Msg { get; set; }
-        public string? Timestamp { get; set; }
+        public bool registerSuccess { get; set; }
+        public string msg { get; set; }
+        public string? timestamp { get; set; }
+
     }
+
 }
