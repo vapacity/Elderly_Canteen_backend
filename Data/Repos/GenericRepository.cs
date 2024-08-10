@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Elderly_Canteen.Data;
 using Elderly_Canteen.Data.Entities;
+using System.Linq.Expressions;
 namespace Elderly_Canteen.Data.Repos
 {
     namespace Elderly_Canteen.Data.Repos
@@ -50,6 +51,10 @@ namespace Elderly_Canteen.Data.Repos
                 T entity = await _dbSet.FindAsync(id);
                 _dbSet.Remove(entity);
                 await _context.SaveChangesAsync();
+            }
+            public async Task<IEnumerable<T>> FindByConditionAsync(Expression<Func<T, bool>> expression)
+            {
+                return await _dbSet.Where(expression).ToListAsync();
             }
         }
     }

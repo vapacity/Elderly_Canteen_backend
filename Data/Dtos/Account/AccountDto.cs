@@ -11,9 +11,10 @@
         public string gender { get; set; } // 性别，必须
 
         // 非必须字段
-        public string? birthDate { get; set; } // 出生日期，可选
+        public DateTime? birthDate { get; set; } // 出生日期，可选
         public string? address { get; set; } // 地址，可选
         public string? name { get; set; } // 姓名，可选
         public string? password { get; set; }
+        public string? Idcard { get; set; }
     }
 }
