@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Entities;
+using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 /*
  * 401
  */
@@ -107,6 +108,19 @@ namespace Elderly_Canteen.Controllers
         {
             var response = await _accountService.GetAllAccountsAsync();
             return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPost("nameAuthenticate")]
+        public async Task<IActionResult> NameAutenticate(AuthenticationRequestDto input)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _accountService.NameAuthentication(input, accountId);
+            if (result.success == false)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
         }
     }
 }

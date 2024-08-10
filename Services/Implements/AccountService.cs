@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Elderly_Canteen.Data.Dtos.Register;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Dtos.Account;
+using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -27,6 +28,7 @@ namespace Elderly_Canteen.Services.Implements
             _configuration = configuration;
         }
 
+        //登录逻辑
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
             var account = await _accountRepository.GetAll()
@@ -64,6 +66,8 @@ namespace Elderly_Canteen.Services.Implements
                 }
             };
         }
+        
+        //注册逻辑
         public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto)
         {
             //手机号重复则说明用户存在
@@ -98,9 +102,11 @@ namespace Elderly_Canteen.Services.Implements
 
             };
         }
-        public async Task<PersonInfoResponseDto> GetPersonInfoAsync(string account_id)
+        
+        //获得个人信息逻辑
+        public async Task<PersonInfoResponseDto> GetPersonInfoAsync(string accountId)
         {
-            var account = await _accountRepository.GetByIdAsync(account_id);
+            var account = await _accountRepository.GetByIdAsync(accountId);
             if (account == null)
             {
                 return new PersonInfoResponseDto
@@ -129,9 +135,11 @@ namespace Elderly_Canteen.Services.Implements
                 }
             };
         }
-        public async Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo,string account_id)
+       
+        //修改个人信息逻辑
+        public async Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo,string accountId)
         {
-            var account = await _accountRepository.GetByIdAsync(account_id);
+            var account = await _accountRepository.GetByIdAsync(accountId);
             if(account == null)
             {
                 return new PersonInfoResponseDto
@@ -189,6 +197,77 @@ namespace Elderly_Canteen.Services.Implements
                 }
             };
         }
+
+        //获得所有个人信息逻辑
+        public async Task<List<AccountDto>> GetAllAccountsAsync()
+        {
+            var accounts = await _accountRepository.GetAllAsync();
+
+            var responseList = new List<AccountDto>();
+
+            foreach (var account in accounts)
+            {
+                var response = new AccountDto
+                {
+                    accountId = account.Accountid,
+                    accountName = account.Accountname,
+                    phoneNum = account.Phonenum,
+                    identity = account.Identity,
+                    portrait = account.Portrait,
+                    gender = account.Gender,
+                    password = account.Password,
+                    address = account.Address,
+                    name = account.Name,
+                    Idcard = account.Idcard
+                    
+                };
+
+                responseList.Add(response);
+            }
+
+            return responseList;
+        }
+
+        //实名认证逻辑
+        public async Task<AuthenticationResponseDto> NameAuthentication(AuthenticationRequestDto input,string accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return new AuthenticationResponseDto
+                {
+                    success = false,
+                    msg = "账户不存在"
+                };
+            }
+            if (account.Idcard != null)
+            {
+                return new AuthenticationResponseDto
+                {
+                    success = false,
+                    msg = "已实名认证"
+                };
+            }
+            var existedIdCard = await _accountRepository.FindByConditionAsync(account => account.Idcard == input.idCard);
+            if (existedIdCard.Any())
+            {
+                return new AuthenticationResponseDto
+                {
+                    success = false,
+                    msg = "该身份已被注册"
+                };
+            }
+            account.Name = input.name;
+            account.Idcard = input.idCard;
+            await _accountRepository.UpdateAsync(account);
+            return new AuthenticationResponseDto
+            {
+                success = true,
+                msg = "认证成功"
+            };
+        }
+
+        //
         //以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用
         private string GenerateJwtToken(Account account)
         {
@@ -234,29 +313,7 @@ namespace Elderly_Canteen.Services.Implements
             // Format the new account ID with leading zeros
             return prefix + newAccountId.ToString("D5");
         }
-        public async Task<List<AccountDto>> GetAllAccountsAsync()
-        {
-            var accounts = await _accountRepository.GetAllAsync();
-
-            var responseList = new List<AccountDto>();
-
-            foreach (var account in accounts)
-            {
-                var response = new AccountDto
-                {
-                    accountId = account.Accountid,
-                    accountName= account.Accountname,
-                    phoneNum = account.Phonenum,
-                    identity = account.Identity,
-                    portrait = account.Portrait,
-                    gender = account.Gender,
-                    password = account.Password
-                };
-
-                responseList.Add(response);
-            }
-
-            return responseList;
-        }
+        
+        
     }
 }
