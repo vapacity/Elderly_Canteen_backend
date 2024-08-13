@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Elderly_Canteen.Data.Entities;
 
-public partial class Account
+public partial class SeniorInfo
 {
-    public string Accountid { get; set; } = null!;
+    public string AccountId { get; set; } = null!;
 
     public string Accountname { get; set; } = null!;
 
@@ -29,15 +29,7 @@ public partial class Account
 
     public string? Idcard { get; set; }
 
-    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
+    public string FamilyNum { get; set; } = null!;
 
-    public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();
-
-    public virtual ICollection<Finance> Finances { get; set; } = new List<Finance>();
-
-    public virtual Senior? Senior { get; set; }
-
-    public virtual ICollection<VolApplication> VolApplications { get; set; } = new List<VolApplication>();
-
-    public virtual Volunteer? Volunteer { get; set; }
+    public decimal Subsidy { get; set; }
 }

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Elderly_Canteen")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c4c0498ee77c64024a9080444fd296b3380177b5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a275dea3cc375c275ad5b085920f8a204203b32")]
 [assembly: System.Reflection.AssemblyProductAttribute("Elderly_Canteen")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Elderly_Canteen")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

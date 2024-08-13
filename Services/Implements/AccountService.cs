@@ -14,6 +14,7 @@ using Elderly_Canteen.Data.Dtos.Register;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Dtos.Account;
 using Elderly_Canteen.Data.Dtos.AuthenticationDto;
+using System.Security.Principal;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -78,6 +79,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 return new RegisterResponseDto
                 {
+                    registerSuccess = false,
                     msg = "用户已存在",
                     timestamp=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 };
@@ -96,9 +98,18 @@ namespace Elderly_Canteen.Services.Implements
             };
             
             await _accountRepository.AddAsync(newAccount);
+            var token = GenerateJwtToken(newAccount);
             return new RegisterResponseDto
             {
-                msg = "注册成功"
+                registerSuccess = true,
+                msg = "注册成功",
+                response = new RegisterResponse
+                {
+                   token = token,
+                   identity = "user",
+                   accountName = newAccount.Accountname,
+                   accountId = newAccount.Accountid,
+                }
 
             };
         }
@@ -267,7 +278,19 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
-        //
+        // 修改密码逻辑
+        public async Task<bool> ChangePassword(string password,string accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return false;
+            }
+            account.Password = password;
+            await _accountRepository.UpdateAsync(account);
+            return true;
+        }
+
         //以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用
         private string GenerateJwtToken(Account account)
         {

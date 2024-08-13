@@ -15,5 +15,6 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo, string account_id);
         Task<List<AccountDto>> GetAllAccountsAsync();
         Task<AuthenticationResponseDto> NameAuthentication(AuthenticationRequestDto input, string accountId);
+        Task<bool> ChangePassword(string password, string accountId);
     }
 }

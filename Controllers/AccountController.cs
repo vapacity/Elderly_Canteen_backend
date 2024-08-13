@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Data.Dtos.AuthenticationDto;
+using Elderly_Canteen.Services.Implements;
 /*
  * 401
  */
@@ -53,17 +54,10 @@ namespace Elderly_Canteen.Controllers
 
             if (result.msg == "用户已存在")
             {
-                return BadRequest(new RegisterResponseDto
-                {
-                    msg = result.msg,
-                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                });
+                return BadRequest(result);
             }
-
-            return Ok(new RegisterResponseDto
-            {
-                msg = result.msg
-            });
+            
+            return Ok(result);
         }
 
         [Authorize]
@@ -121,6 +115,25 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest(result);
             }
             return Ok(result);
+        }
+        [Authorize]
+        [HttpPost("changePassword")]
+        public async Task<IActionResult> ChangePassword(string pswd)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            bool result = await _accountService.ChangePassword(pswd, accountId);
+            if (result == false) {
+                return BadRequest(new
+                {
+                    success = false,
+                    msg = "修改失败",
+                });
+            }
+            return Ok(new
+            {
+                success = true,
+                msg = "修改成功",
+            });
         }
     }
 }
