@@ -39,6 +39,7 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 // 注册其他服务
 builder.Services.AddScoped<IAccountService, AccountService>();
 
+
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
