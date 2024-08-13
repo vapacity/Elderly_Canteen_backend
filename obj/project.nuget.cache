@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "oRdb+O1RaN8=",
+  "dgSpecHash": "RGTGUlqXJac=",
   "success": true,
   "projectFilePath": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj",
   "expectedPackageFiles": [
@@ -36,6 +36,7 @@
     "C:\\Users\\vapacity\\.nuget\\packages\\microsoft.identitymodel.tokens\\7.6.3\\microsoft.identitymodel.tokens.7.6.3.nupkg.sha512",
     "C:\\Users\\vapacity\\.nuget\\packages\\microsoft.openapi\\1.6.14\\microsoft.openapi.1.6.14.nupkg.sha512",
     "C:\\Users\\vapacity\\.nuget\\packages\\mono.texttemplating\\2.2.1\\mono.texttemplating.2.2.1.nupkg.sha512",
+    "C:\\Users\\vapacity\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\vapacity\\.nuget\\packages\\oracle.entityframeworkcore\\8.23.50\\oracle.entityframeworkcore.8.23.50.nupkg.sha512",
     "C:\\Users\\vapacity\\.nuget\\packages\\oracle.manageddataaccess.core\\23.5.0\\oracle.manageddataaccess.core.23.5.0.nupkg.sha512",
     "C:\\Users\\vapacity\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
