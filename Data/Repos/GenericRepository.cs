@@ -56,6 +56,20 @@ namespace Elderly_Canteen.Data.Repos
             {
                 return await _dbSet.Where(expression).ToListAsync();
             }
+
+            // 新增方法以支持Include导航属性
+            public async Task<List<T>> GetWithIncludesAsync(
+                params Expression<Func<T, object>>[] includeProperties)
+            {
+                IQueryable<T> query = _dbSet;
+
+                foreach (var includeProperty in includeProperties)
+                {
+                    query = query.Include(includeProperty);
+                }
+
+                return await query.ToListAsync();
+            }
         }
     }
 }

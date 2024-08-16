@@ -13,7 +13,7 @@ using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Ìí¼Ó CORS ·şÎñ£¬ÔÊĞíËùÓĞÀ´Ô´
+// æ·»åŠ  CORS æœåŠ¡ï¼Œå…è®¸æ‰€æœ‰æ¥æº
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",
@@ -25,22 +25,23 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Ìí¼Ó¿ØÖÆÆ÷·şÎñ
+// æ·»åŠ æ§åˆ¶å™¨æœåŠ¡
 builder.Services.AddControllers();
 
-// Ìí¼ÓÊı¾İ¿âÉÏÏÂÎÄ
+// æ·»åŠ æ•°æ®åº“ä¸Šä¸‹æ–‡
 builder.Services.AddDbContext<ModelContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 Console.WriteLine("Database Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
 
-// ×¢²áÍ¨ÓÃ²Ö´¢·şÎñ
+// æ³¨å†Œé€šç”¨ä»“å‚¨æœåŠ¡
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
-// ×¢²áÆäËû·şÎñ
+// æ³¨å†Œå…¶ä»–æœåŠ¡
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IDonateService, DonateService>();
 
-// JWT Éí·İÑéÖ¤
+// JWT èº«ä»½éªŒè¯
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
 
@@ -65,7 +66,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Ìí¼Ó Swagger
+// æ·»åŠ  Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Elderly Canteen API", Version = "v1" });
@@ -94,7 +95,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ÅäÖÃÇëÇó¹ÜµÀ
+// é…ç½®è¯·æ±‚ç®¡é“
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -105,13 +106,13 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Ê¹ÓÃ×ª·¢Í·ÖĞ¼ä¼ş
+// ä½¿ç”¨è½¬å‘å¤´ä¸­é—´ä»¶
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-// Ê¹ÓÃ CORS ÖĞ¼ä¼ş£¬ÔÊĞíËùÓĞÀ´Ô´
+// ä½¿ç”¨ CORS ä¸­é—´ä»¶ï¼Œå…è®¸æ‰€æœ‰æ¥æº
 app.UseCors("AllowAllOrigins");
 
 app.UseHttpsRedirection();
