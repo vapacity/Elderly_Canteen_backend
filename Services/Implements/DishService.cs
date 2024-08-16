@@ -1,15 +1,18 @@
-﻿using Elderly_Canteen.Data.Dtos.Dish;
+﻿/*using Elderly_Canteen.Data.Dtos.Dish;
 using Microsoft.EntityFrameworkCore;
 using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Data.Repos;
 using Elderly_Canteen.Services.Interfaces;
-using Elderly_Canteen.Data.Repos.DishRepository;
+
 namespace Elderly_Canteen.Services.Implements
 {
     public class DishService : IDishService
     {
         private readonly IGenericRepository<Dish> _dishRepository;
         private readonly IGenericRepository<Formula> _formulaRepository;
+        private readonly IGenericRepository<Category> _categoryRepository;
+        private readonly IGenericRepository<Ingredient> _ingredientRepository;
+        private readonly IGenericRepository<Category> _categoryRepository;
         private readonly IGenericRepository<Category> _categoryRepository;
 
         public DishService(IGenericRepository<Dish> dishRepository,
@@ -21,9 +24,10 @@ namespace Elderly_Canteen.Services.Implements
             _categoryRepository = categoryRepository;
         }
 
-        /*public async Task<DishResponseDto> AddDishAsync(DishRequestDto dishRequestDto)
+        *//*public async Task<DishResponseDto> AddDishAsync(DishRequestDto dishRequestDto)
         {
 
-        }*/
+        }*//*
     }
 }
+*/
