@@ -15,6 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+afe2d7be9ad175b4cfd9624f119dea9597d5213a")]
+
 [assembly: System.Reflection.AssemblyProductAttribute("Elderly_Canteen")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Elderly_Canteen")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

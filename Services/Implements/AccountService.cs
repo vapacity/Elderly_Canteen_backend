@@ -146,24 +146,40 @@ namespace Elderly_Canteen.Services.Implements
                 }
             };
         }
-       
+
         //修改个人信息逻辑
-        public async Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo,string accountId)
+        public async Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo, string accountId)
         {
             var account = await _accountRepository.GetByIdAsync(accountId);
-            if(account == null)
+            if (account == null)
             {
                 return new PersonInfoResponseDto
-                { 
-                    getSuccess=false,
+                {
+                    alterSuccess = false,
                     msg = "用户不存在",
                     response = null
                 };
             }
-            account.Accountname = personInfo.accountName;
-            account.Phonenum = personInfo.phoneNum;
-            account.Portrait = personInfo.portrait;
-            account.Gender = personInfo.gender;
+
+            if (!string.IsNullOrEmpty(personInfo.accountName))
+            {
+                account.Accountname = personInfo.accountName;
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.phoneNum))
+            {
+                account.Phonenum = personInfo.phoneNum;
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.portrait))
+            {
+                account.Portrait = personInfo.portrait;
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.gender))
+            {
+                account.Gender = personInfo.gender;
+            }
 
             if (personInfo.birthDate != null)
             {
@@ -178,7 +194,6 @@ namespace Elderly_Canteen.Services.Implements
                 }
             }
 
-
             if (!string.IsNullOrEmpty(personInfo.address))
             {
                 account.Address = personInfo.address;
@@ -188,6 +203,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 account.Name = personInfo.name;
             }
+
             await _accountRepository.UpdateAsync(account);
 
             return new PersonInfoResponseDto
@@ -208,6 +224,7 @@ namespace Elderly_Canteen.Services.Implements
                 }
             };
         }
+
 
         //获得所有个人信息逻辑
         public async Task<List<AccountDto>> GetAllAccountsAsync()
