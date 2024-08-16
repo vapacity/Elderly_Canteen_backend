@@ -152,18 +152,8 @@ public class EmployeeManagement : IEmployeeManagement
     {
         // 查找员工信息，根据 EmployeeId 属性
         var employee = await _employeeRepository.FindByConditionAsync(e => e.EmployeeId == id);
-        if (employee != null)
-        {
-            employee.EmployeeName = employeeDto.EmployeeName;
-            employee.PhoneNum = employeeDto.PhoneNum;
-            employee.Address = employeeDto.Address;
-            employee.EmployeePosition = employeeDto.EmployeePosition;
-            employee.Salary = employeeDto.Salary;
-            employee.IdCard = employeeDto.IdCard;
-            employee.Ispaidthismonth = employeeDto.IsPaidThisMonth;
 
-            await _employeeRepository.UpdateAsync(employee);
-        }
+
     }
 
     //删除ID对应的员工
