@@ -521,6 +521,9 @@ public partial class ModelContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("ID_CARD");
+            entity.Property(e => e.Ispaidthismonth)
+                .HasColumnType("NUMBER(1)")
+                .HasColumnName("ISPAIDTHISMONTH");
             entity.Property(e => e.PhoneNum)
                 .HasMaxLength(11)
                 .IsUnicode(false)
@@ -582,7 +585,6 @@ public partial class ModelContext : DbContext
 
             entity.HasOne(d => d.Administrator).WithMany(p => p.Finances)
                 .HasForeignKey(d => d.AdministratorId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_FINANCE_ADMINISTRATOR");
         });
 

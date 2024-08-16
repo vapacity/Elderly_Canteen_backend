@@ -38,6 +38,8 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 
 // 注册其他服务
 builder.Services.AddScoped<IAccountService, AccountService>();
+// 注册员工管理服务
+builder.Services.AddScoped<IEmployeeManagement, EmployeeManagement>();
 
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");

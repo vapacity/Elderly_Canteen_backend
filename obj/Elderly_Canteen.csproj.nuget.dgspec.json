@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj": {}
+    "D:\\canteen\\Elderly_Canteen_backend\\Elderly_Canteen.csproj": {}
   },
   "projects": {
-    "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj": {
+    "D:\\canteen\\Elderly_Canteen_backend\\Elderly_Canteen.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj",
+        "projectUniqueName": "D:\\canteen\\Elderly_Canteen_backend\\Elderly_Canteen.csproj",
         "projectName": "Elderly_Canteen",
-        "projectPath": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj",
-        "packagesPath": "C:\\Users\\vapacity\\.nuget\\packages\\",
-        "outputPath": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\obj\\",
+        "projectPath": "D:\\canteen\\Elderly_Canteen_backend\\Elderly_Canteen.csproj",
+        "packagesPath": "C:\\Users\\22935\\.nuget\\packages\\",
+        "outputPath": "D:\\canteen\\Elderly_Canteen_backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\vapacity\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\22935\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -52,13 +52,17 @@
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[8.0.7, )"
+              "version": "[8.0.8, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.7, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
             },
             "Oracle.EntityFrameworkCore": {
               "target": "Package",
