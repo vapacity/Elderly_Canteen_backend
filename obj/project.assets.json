@@ -3453,19 +3453,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\vapacity\\.nuget\\packages\\": {}
+    "C:\\Users\\樊佳欣\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj",
+      "projectUniqueName": "D:\\Repos\\elderly_canteen\\Elderly_Canteen.csproj",
       "projectName": "Elderly_Canteen",
-      "projectPath": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\Elderly_Canteen.csproj",
-      "packagesPath": "C:\\Users\\vapacity\\.nuget\\packages\\",
-      "outputPath": "E:\\Projects\\Elderly_Canteen\\Elderly_Canteen\\obj\\",
+      "projectPath": "D:\\Repos\\elderly_canteen\\Elderly_Canteen.csproj",
+      "packagesPath": "C:\\Users\\樊佳欣\\.nuget\\packages\\",
+      "outputPath": "D:\\Repos\\elderly_canteen\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\vapacity\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\樊佳欣\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
