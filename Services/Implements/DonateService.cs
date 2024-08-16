@@ -17,16 +17,17 @@ using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 using Elderly_Canteen.Data.Dtos.Donate;
 using System.Security.Principal;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Elderly_Canteen.Data.Repos.Elderly_Canteen.Data.Repos;
 
 namespace Elderly_Canteen.Services.Implements
 {
     public class DonateService : IDonateService
     {
-        private readonly IDonateRepository<Donation> _donateRepository;
-        private readonly IFinanceRepository<Finance> _financeRepository;
+        private readonly IGenericRepository<Donation> _donateRepository;
+        private readonly IGenericRepository<Finance> _financeRepository;
         private readonly IConfiguration _configuration;
 
-        public DonateService(IDonateRepository<Donation> donateRepository, IFinanceRepository<Finance> financeRepository, IConfiguration configuration)
+        public DonateService(IGenericRepository<Donation> donateRepository, IGenericRepository<Finance> financeRepository, IConfiguration configuration)
         {
             _donateRepository = donateRepository ?? throw new ArgumentNullException(nameof(donateRepository));
             _financeRepository = financeRepository ?? throw new ArgumentNullException(nameof(financeRepository));
@@ -36,7 +37,7 @@ namespace Elderly_Canteen.Services.Implements
         //获得捐赠列表逻辑
         public async Task<DonationListDto> GetDonateListAsync()
         {
-            var donations = await _donateRepository.GetListAsync();
+            var donations = await _donateRepository.GetWithIncludesAsync(d => d.Finance);
 
             var responseDataList = new List<DonationListDto.ResponceData>();
 

@@ -35,8 +35,6 @@ Console.WriteLine("Database Connection String: " + builder.Configuration.GetConn
 
 // 注册通用仓储服务
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped(typeof(IDonateRepository<>), typeof(DonateRepository<>));
-builder.Services.AddScoped(typeof(IFinanceRepository<>), typeof(FinanceRepository<>));
 
 // 注册其他服务
 builder.Services.AddScoped<IAccountService, AccountService>();
