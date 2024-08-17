@@ -19,6 +19,8 @@ public partial class Employee
 
     public string IdCard { get; set; } = null!;
 
+    public bool? Ispaidthismonth { get; set; }
+
     public virtual ICollection<DeliverE> DeliverEs { get; set; } = new List<DeliverE>();
 
     public virtual ICollection<PayWage> PayWages { get; set; } = new List<PayWage>();
