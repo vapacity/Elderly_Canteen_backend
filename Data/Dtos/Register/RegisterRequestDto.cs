@@ -8,6 +8,5 @@
         public string verificationCode { set; get; }
         public string gender { set; get; }
         public string? birthDate { set;get; }
-        public string? avatar { set;get; }
     }
 }

@@ -15,6 +15,7 @@ using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Dtos.Account;
 using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 using System.Security.Principal;
+using Microsoft.Extensions.Hosting;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -22,11 +23,13 @@ namespace Elderly_Canteen.Services.Implements
     {
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
 
-        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration)
+        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IWebHostEnvironment environment)
         {
             _accountRepository = accountRepository;
             _configuration = configuration;
+            _environment = environment;
         }
 
         //登录逻辑
@@ -67,11 +70,11 @@ namespace Elderly_Canteen.Services.Implements
                 }
             };
         }
-        
+
         //注册逻辑
-        public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto)
+        public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto, IFormFile avatar)
         {
-            //手机号重复则说明用户存在
+            // 检查用户是否存在
             var existingAccount = await _accountRepository.GetAll()
                 .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.phone);
 
@@ -81,22 +84,29 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     registerSuccess = false,
                     msg = "用户已存在",
-                    timestamp=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 };
+            }
+
+            // 处理头像文件并生成路径
+            string avatarPath = null;
+            if (avatar != null)
+            {
+                avatarPath = await SaveAvatarAsync(avatar);
             }
 
             var newAccount = new Account
             {
                 Accountid = await GenerateAccountIdAsync(),
                 Accountname = registerRequestDto.userName,
-                Password = registerRequestDto.password, // Note: You should hash the password here
+                Password = registerRequestDto.password,
                 Phonenum = registerRequestDto.phone,
-                Identity = "user", //一开始默认为普通用户
+                Identity = "user",
                 Gender = registerRequestDto.gender,
                 Birthdate = DateTime.TryParse(registerRequestDto.birthDate, out var birthdate) ? birthdate : (DateTime?)null,
-                Portrait = registerRequestDto.avatar
+                Portrait = avatarPath // 保存头像路径
             };
-            
+
             await _accountRepository.AddAsync(newAccount);
             var token = GenerateJwtToken(newAccount);
             return new RegisterResponseDto
@@ -105,15 +115,15 @@ namespace Elderly_Canteen.Services.Implements
                 msg = "注册成功",
                 response = new RegisterResponse
                 {
-                   token = token,
-                   identity = "user",
-                   accountName = newAccount.Accountname,
-                   accountId = newAccount.Accountid,
+                    token = token,
+                    identity = "user",
+                    accountName = newAccount.Accountname,
+                    accountId = newAccount.Accountid,
                 }
-
             };
         }
-        
+
+
         //获得个人信息逻辑
         public async Task<PersonInfoResponseDto> GetPersonInfoAsync(string accountId)
         {
@@ -138,7 +148,7 @@ namespace Elderly_Canteen.Services.Implements
                     accountName = account.Accountname,
                     phoneNum = account.Phonenum,
                     identity = account.Identity,
-                    portrait = account.Portrait,
+                    portrait = account.Portrait != null ? $"/{account.Portrait}" : null, // 返回相对路径
                     gender = account.Gender,
                     birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
@@ -148,7 +158,7 @@ namespace Elderly_Canteen.Services.Implements
         }
 
         //修改个人信息逻辑
-        public async Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo, string accountId)
+        public async Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo, string accountId, IFormFile avatar)
         {
             var account = await _accountRepository.GetByIdAsync(accountId);
             if (account == null)
@@ -168,12 +178,27 @@ namespace Elderly_Canteen.Services.Implements
 
             if (!string.IsNullOrEmpty(personInfo.phoneNum))
             {
+                // 检查数据库中是否已存在相同的手机号
+                var existingAccount = await _accountRepository.GetAll()
+                    .FirstOrDefaultAsync(a => a.Phonenum == personInfo.phoneNum && a.Accountid != accountId);
+
+                if (existingAccount != null)
+                {
+                    return new PersonInfoResponseDto
+                    {
+                        alterSuccess = false,
+                        msg = "手机号已被占用",
+                        response = null
+                    };
+                }
                 account.Phonenum = personInfo.phoneNum;
             }
 
-            if (!string.IsNullOrEmpty(personInfo.portrait))
+            if (avatar != null)
             {
-                account.Portrait = personInfo.portrait;
+                // 处理头像文件并生成路径
+                var avatarPath = await SaveAvatarAsync(avatar);
+                account.Portrait = avatarPath;
             }
 
             if (!string.IsNullOrEmpty(personInfo.gender))
@@ -186,11 +211,6 @@ namespace Elderly_Canteen.Services.Implements
                 if (DateTime.TryParse(personInfo.birthDate, out DateTime birthDate))
                 {
                     account.Birthdate = birthDate;
-                }
-                else
-                {
-                    // 处理无法解析的情况
-                    // 例如，记录错误日志或抛出异常
                 }
             }
 
@@ -218,12 +238,13 @@ namespace Elderly_Canteen.Services.Implements
                     identity = account.Identity,
                     portrait = account.Portrait,
                     gender = account.Gender,
-                    birthDate = account.Birthdate.ToString(),
+                    birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
                     name = account.Name
                 }
             };
         }
+
 
 
         //获得所有个人信息逻辑
@@ -353,7 +374,29 @@ namespace Elderly_Canteen.Services.Implements
             // Format the new account ID with leading zeros
             return prefix + newAccountId.ToString("D5");
         }
-        
-        
+
+        private async Task<string> SaveAvatarAsync(IFormFile avatar)
+        {
+            // 使用 ContentRootPath 来获取项目根目录路径
+            var uploadPath = Path.Combine(_environment.ContentRootPath, "uploads");
+
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            var uniqueFileName = $"{Path.GetFileNameWithoutExtension(avatar.FileName)}_{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
+            var filePath = Path.Combine(uploadPath, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await avatar.CopyToAsync(stream);
+            }
+
+            return Path.Combine("uploads", uniqueFileName).Replace("\\", "/");
+        }
+
+
+
     }
 }
