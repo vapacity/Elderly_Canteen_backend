@@ -9,6 +9,8 @@ using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 using Elderly_Canteen.Services.Implements;
+using Elderly_Canteen.Tools;
+using Elderly_Canteen.Data.Dtos.OTP;
 /*
  * 401
  */
@@ -134,6 +136,28 @@ namespace Elderly_Canteen.Controllers
                 success = true,
                 msg = "修改成功",
             });
+        }
+
+        [HttpPost("sendOTP")]
+        public async Task<IActionResult> RequestVerificationCode([FromBody] GetOTPRequestDto request)
+        {
+            var response = await _accountService.SendOTPAsync(request);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpPost("verifiationCodeLogin")]
+        public async Task<IActionResult> VerifyLoginOTP([FromBody] VerifyOTPRequestDto request)
+        {
+            var response = await _accountService.VerifyLoginOTPAsync(request);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
         }
     }
 }
