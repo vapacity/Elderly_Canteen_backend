@@ -26,6 +26,7 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("login")]
+        [Consumes("application/json")]
         public async Task<IActionResult> Login(LoginRequestDto loginRequest)
         {
             var loginResponse = await _accountService.LoginAsync(loginRequest);
@@ -48,15 +49,16 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequestDto registerRequestDto)
+        public async Task<IActionResult> Register([FromForm] RegisterRequestDto registerRequestDto, IFormFile avatar)
         {
-            var result = await _accountService.RegisterAsync(registerRequestDto);
+            // 将头像文件传递给Service层进行处理
+            var result = await _accountService.RegisterAsync(registerRequestDto, avatar);
 
             if (result.msg == "用户已存在")
             {
                 return BadRequest(result);
             }
-            
+
             return Ok(result);
         }
 
@@ -81,21 +83,23 @@ namespace Elderly_Canteen.Controllers
 
         [Authorize]
         [HttpPost("alterPersonInfo")]
-        public async Task<IActionResult> AlterPersonInfo(PersonInfoRequestDto personInfo)
+        public async Task<IActionResult> AlterPersonInfo([FromForm] PersonInfoRequestDto personInfo,IFormFile? avatar)
         {
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(accountId))
             {
                 return Unauthorized(new { msg = "无效的Token" });
             }
-            // 调用Service函数获取个人信息
-            var response = await _accountService.AlterPersonInfoAsync(personInfo,accountId);
+
+            // 将头像文件传递给Service层进行处理
+            var response = await _accountService.AlterPersonInfoAsync(personInfo, accountId, avatar);
             if (response.getSuccess == false)
             {
                 return NotFound(response);
             }
             return Ok(response);
         }
+
 
         [HttpGet("getAllAccount")]
         public async Task<IActionResult> GetAllAccount()
