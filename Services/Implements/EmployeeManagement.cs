@@ -51,32 +51,35 @@ public class EmployeeManagement : IEmployeeManagement
             new EmployeeInfoResponseDto
             {
                 Success = false,
-                Msg = "No employees found",
+                Msg = "数据库中无员工信息",
                 Response = new List<EmployeeResponseData>()
             }
         };
         }
 
-        //转换员工实体为DTO对象
-        return employees.Select(emp => new EmployeeInfoResponseDto
+        //转换员工实体为DTO对象，并将所有员工信息放入一个列表中
+        var employeeList = employees.Select(emp => new EmployeeResponseData
         {
-            Success = true,
-            Msg = "员工检索成功",
-            Response = new List<EmployeeResponseData>
-            {
-                new EmployeeResponseData
-                {
-                    EmployeeId = emp.EmployeeId,
-                    EmployeeName = emp.EmployeeName,
-                    PhoneNum = emp.PhoneNum,
-                    Address = emp.Address,
-                    EmployeePosition = emp.EmployeePosition,
-                    Salary = emp.Salary,
-                    IdCard = emp.IdCard,
-                    IsPaidThisMonth = emp.Ispaidthismonth
-                }
-            }
+            EmployeeId = emp.EmployeeId,
+            EmployeeName = emp.EmployeeName,
+            PhoneNum = emp.PhoneNum,
+            Address = emp.Address,
+            EmployeePosition = emp.EmployeePosition,
+            Salary = emp.Salary,
+            IdCard = emp.IdCard,
+            IsPaidThisMonth = emp.Ispaidthismonth
         }).ToList();
+
+        //返回一个包含所有员工信息的单个EmployeeInfoResponseDto对象
+        return new List<EmployeeInfoResponseDto>
+        {
+            new EmployeeInfoResponseDto
+            {
+                Success = true,
+                Msg = "员工检索成功",
+                Response = employeeList
+            }
+    };
     }
 
     //通过ID获取员工信息
@@ -85,10 +88,11 @@ public class EmployeeManagement : IEmployeeManagement
         var employee = await _employeeRepository.GetByIdAsync(id);
         if (employee == null)
         {
+         
             return new EmployeeInfoResponseDto
             {
                 Success = false,
-                Msg = "Employee not found",
+                Msg = $"员工ID为 {id} 的员工不存在。",
                 Response = null
             };
         }
@@ -96,7 +100,7 @@ public class EmployeeManagement : IEmployeeManagement
         return new EmployeeInfoResponseDto
         {
             Success = true,
-            Msg = "Employee retrieved successfully",
+            Msg = "员工查找信息如下",
             Response = new List<EmployeeResponseData>
             {
                 new EmployeeResponseData
@@ -153,7 +157,25 @@ public class EmployeeManagement : IEmployeeManagement
         // 查找员工信息，根据 EmployeeId 属性
         var employee = await _employeeRepository.FindByConditionAsync(e => e.EmployeeId == id);
 
+        if (employee == null || !employee.Any())
+        {
+            // 如果员工不存在，抛出一个异常或返回错误信息
+            throw new InvalidOperationException($"员工ID为 {id} 的员工不存在。");
+        }
+        // 获取找到的第一个员工实体（假设 EmployeeId 是唯一的）
+        var employeeToModify = employee.First();
 
+        // 更新员工信息
+        employeeToModify.EmployeeName = employeeDto.EmployeeName;
+        employeeToModify.PhoneNum = employeeDto.PhoneNum;
+        employeeToModify.Address = employeeDto.Address;
+        employeeToModify.EmployeePosition = employeeDto.EmployeePosition;
+        employeeToModify.Salary = employeeDto.Salary;
+        employeeToModify.IdCard = employeeDto.IdCard;
+        employeeToModify.Ispaidthismonth = employeeDto.IsPaidThisMonth;
+
+        // 保存更改
+        await _employeeRepository.UpdateAsync(employeeToModify);
     }
 
     //删除ID对应的员工

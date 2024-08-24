@@ -60,12 +60,29 @@ public class EmployeeController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateEmployee(string id, EmployeeInfoRequestDto employeeDto)
     {
-        if (id.ToString() != employeeDto.EmployeeId)
+        // 验证传入的 ID 是否与 DTO 中的 EmployeeId 一致
+        if (id != employeeDto.EmployeeId)
         {
-            return BadRequest();
+            return BadRequest(new { success = false, msg = "请求路径中的 ID 与提交的数据不匹配。" });
         }
-        await _employeeManagement.UpdateEmployeeAsync(id, employeeDto);
-        return NoContent();
+
+        try
+        {
+            // 调用服务层的 UpdateEmployeeAsync 方法更新员工信息
+            await _employeeManagement.UpdateEmployeeAsync(id, employeeDto);
+
+            return Ok(new { success = true, msg = "修改成功" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // 如果员工不存在，返回 404 Not Found
+            return NotFound(new { success = false, msg = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            // 处理其他可能的错误，返回 500 Internal Server Error
+            return StatusCode(500, new { success = false, msg = $"内部服务器错误: {ex.Message}" });
+        }
     }
 
     [HttpDelete("{id}")]

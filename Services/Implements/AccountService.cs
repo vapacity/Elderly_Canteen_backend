@@ -15,7 +15,12 @@ using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Dtos.Account;
 using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 using System.Security.Principal;
+using Elderly_Canteen.Tools;
+using Elderly_Canteen.Data.Dtos.OTP;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.Extensions.Hosting;
+
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -23,14 +28,124 @@ namespace Elderly_Canteen.Services.Implements
     {
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _memoryCache;
         private readonly IWebHostEnvironment _environment;
 
-        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IWebHostEnvironment environment)
+        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IMemoryCache memoryCache，IWebHostEnvironment environment)
         {
             _accountRepository = accountRepository;
             _configuration = configuration;
+            _memoryCache = memoryCache;
             _environment = environment;
         }
+
+        //发送验证码逻辑
+        public async Task<GetOTPResponseDto> SendOTPAsync(GetOTPRequestDto request)
+        {
+            var response = new GetOTPResponseDto();
+            var accessKeyId = "LTAI5tK1wVEksEXtvyRf6V9H";
+            var accessKeySecret = "LDNuw6ekoZXTqLtG3PoxfHQgnvqC1Q";
+            var signName = "长者食堂";
+            var templateCode = "SMS_471945131";
+
+            try
+            {
+                // 实例化 AliSmsSender
+                var smsSender = new AliSmsSender(accessKeyId, accessKeySecret, signName);
+                // 生成随机四位数验证码
+                var random = new Random();
+                var code = random.Next(1000, 10000).ToString();
+
+                // 保存验证码到数据库或缓存中（此处可以扩展）
+                await SaveOTPAsync(request.PhoneNum, code);
+
+                // 发送短信验证码
+                var result = await smsSender.SendAsync(request.PhoneNum, templateCode, new { code = code });
+
+
+                if (result.Code == "OK")
+                {
+                    response.Success = true;
+                    response.Msg = "验证码已发送";
+                }
+                else
+                {
+                    response.Success = false;
+                    response.Msg = "发送失败：" + result.Message;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Msg = "发送验证码时发生错误：" + ex.Message;
+            }
+
+            return response;
+
+        }
+
+        //保存验证码逻辑(保存到缓存)
+        private async Task SaveOTPAsync(string phoneNum, string code)
+        {
+            // 将验证码保存到内存缓存中，设置3分钟的过期时间
+            _memoryCache.Set(phoneNum, code, TimeSpan.FromMinutes(3));
+        }
+        //获取保存的验证码逻辑
+        private async Task<string> GetOTPAsync(string phoneNum)
+        {
+            // 从内存缓存中获取验证码
+            _memoryCache.TryGetValue(phoneNum, out string code);
+            return code;
+        }
+
+        //验证码登录
+        public async Task<VerifyOTPResponseDto<OTPLoginResponseDto>> VerifyLoginOTPAsync(VerifyOTPRequestDto request)
+        {
+            var response = new VerifyOTPResponseDto<OTPLoginResponseDto>();
+            // 从缓存中获取验证码
+            var savedCode = await GetOTPAsync(request.PhoneNum);
+            if (savedCode == null || savedCode != request.Code)
+            {
+                response.Success = false;
+                response.Msg = "验证码无效或已过期";
+                return response;
+            }
+            // 验证通过，查找用户
+            var account = await _accountRepository.GetAll()
+               .FirstOrDefaultAsync(a => a.Phonenum == request.PhoneNum);
+            if (account == null)
+            {
+                response.Success = false;
+                response.Msg = "用户不存在！";
+                return response;
+            }
+            // 检查是否需要更新密码
+            if (!string.IsNullOrEmpty(request.NewPassword))
+            {
+                var passwordChanged = await ChangePassword(request.NewPassword, account.Accountid);
+                if (!passwordChanged)
+                {
+                    response.Success = false;
+                    response.Msg = "密码更新失败";
+                    return response;
+                }
+            }
+            //生成 Token 并返回用户信息
+            var token = GenerateJwtToken(account);
+            response.Success = true;
+            response.Msg = "登录成功";
+            response.Response = new OTPLoginResponseDto
+            {
+                Token = token,
+                Identity = account.Identity,
+                AccountName = account.Accountname,
+                AccountId = account.Accountid
+            };
+            // 验证通过，删除缓存中的验证码
+            _memoryCache.Remove(request.PhoneNum);
+            return response;
+        }
+       
 
         //登录逻辑
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest)

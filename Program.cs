@@ -49,6 +49,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IDonateService, DonateService>();
 builder.Services.AddScoped<IEmployeeManagement, EmployeeManagement>();
+builder.Services.AddMemoryCache();//配置内存缓存
 
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");

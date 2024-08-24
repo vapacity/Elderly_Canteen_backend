@@ -5,6 +5,7 @@ using Elderly_Canteen.Data.Dtos.Register;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Dtos.Account;
 using Elderly_Canteen.Data.Dtos.AuthenticationDto;
+using Elderly_Canteen.Data.Dtos.OTP;
 namespace Elderly_Canteen.Services.Interfaces
 {
     public interface IAccountService
@@ -16,5 +17,7 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<List<AccountDto>> GetAllAccountsAsync();
         Task<AuthenticationResponseDto> NameAuthentication(AuthenticationRequestDto input, string accountId);
         Task<bool> ChangePassword(string password, string accountId);
+        Task<VerifyOTPResponseDto<OTPLoginResponseDto>> VerifyLoginOTPAsync(VerifyOTPRequestDto request);
+        Task<GetOTPResponseDto> SendOTPAsync(GetOTPRequestDto request);
     }
 }
