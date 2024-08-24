@@ -5,5 +5,6 @@ namespace Elderly_Canteen.Services.Interfaces
     public interface ICartService
     {
         Task<CartResponseDto> CreateCartAsync(string accountId);
+        Task<CartResponseDto> DeleteCartAsync(string accountId);
     }
 }

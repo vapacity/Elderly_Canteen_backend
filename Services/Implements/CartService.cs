@@ -99,5 +99,41 @@ namespace Elderly_Canteen.Services.Implements
 
 
         }
+        public async Task<CartResponseDto> DeleteCartAsync(string accountId)
+        {
+            try
+            {
+                var existedCart = (await _cartRepository.FindByConditionAsync(cart => cart.AccountId == accountId)).FirstOrDefault();
+                if (existedCart != null)
+                {
+                    await _cartRepository.DeleteAsync(existedCart);
+
+                    // 返回 CartResponseDto
+                    return new CartResponseDto
+                    {
+                        success = true,
+                        msg = "Cart Deleted Successfully!",
+                        response = new CartResponseDto.CartResponse
+                        {
+                            cartId = existedCart.CartId,
+                            createTime = existedCart.CreatedTime,
+                            updateTime = existedCart.UpdatedTime
+                        }
+                    };
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                return new CartResponseDto
+                {
+                    success = false,
+                    msg = ex.ToString()
+                };
+            }
+        }
     }
 }

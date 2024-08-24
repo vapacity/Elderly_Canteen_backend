@@ -10,8 +10,16 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 设置 Kestrel 服务器选项，包括 MaxRequestBodySize
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 52428800; // 50 MB
+});
 
 // 添加 CORS 服务，允许所有来源
 builder.Services.AddCors(options =>
@@ -88,10 +96,26 @@ builder.Services.AddSwaggerGen(c =>
             {
                 Type = ReferenceType.SecurityScheme,
                 Id = "Bearer"
-            }
+            },
         },
         new string[] { }
     }
+    });
+    c.OperationFilter<FormDataOperationFilter>();
+
+    c.DocInclusionPredicate((docName, apiDesc) =>
+    {
+        // 检查是否有 FromForm 参数
+        var isFormApi = apiDesc.ParameterDescriptions.Any(p => p.Source.Id == "FormFile" || p.Source.Id == "Form");
+
+        // 如果是 form-data 接口，应用 FormDataOperationFilter
+        if (isFormApi)
+        {
+            return true;
+        }
+
+        // 其他 API 返回 true 即可
+        return !isFormApi;
     });
 });
 
@@ -116,6 +140,20 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 // 使用 CORS 中间件，允许所有来源
 app.UseCors("AllowAllOrigins");
+
+// 使用静态文件中间件
+// 这里将自定义的 uploads 目录配置为静态文件目录
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 
 app.UseHttpsRedirection();
 
