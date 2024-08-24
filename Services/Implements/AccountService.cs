@@ -31,7 +31,7 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IMemoryCache _memoryCache;
         private readonly IWebHostEnvironment _environment;
 
-        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IMemoryCache memoryCache，IWebHostEnvironment environment)
+        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IMemoryCache memoryCache,IWebHostEnvironment environment)
         {
             _accountRepository = accountRepository;
             _configuration = configuration;
