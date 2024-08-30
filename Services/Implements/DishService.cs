@@ -24,10 +24,10 @@ namespace Elderly_Canteen.Services.Implements
             _categoryRepository = categoryRepository;
         }
 
-        *//*public async Task<DishResponseDto> AddDishAsync(DishRequestDto dishRequestDto)
+        public async Task<DishResponseDto> AddDishAsync(DishRequestDto dishRequestDto)
         {
 
-        }*//*
+        }
     }
 }
 */

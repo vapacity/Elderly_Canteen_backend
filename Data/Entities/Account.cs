@@ -17,8 +17,6 @@ public partial class Account
 
     public string Identity { get; set; } = null!;
 
-    public string? Portrait { get; set; }
-
     public string? Gender { get; set; }
 
     public DateTime? Birthdate { get; set; }
@@ -28,6 +26,8 @@ public partial class Account
     public string? Name { get; set; }
 
     public string? Idcard { get; set; }
+
+    public string? Portrait { get; set; }
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 

@@ -11,9 +11,7 @@ public partial class Ingredient
 
     public virtual ICollection<Formula> Formulas { get; set; } = new List<Formula>();
 
-    public virtual ICollection<Repository> RepositoryIngredientNameNavigations { get; set; } = new List<Repository>();
-
-    public virtual ICollection<Repository> RepositoryIngredients { get; set; } = new List<Repository>();
+    public virtual ICollection<Repository> Repositories { get; set; } = new List<Repository>();
 
     public virtual ICollection<Restock> Restocks { get; set; } = new List<Restock>();
 }

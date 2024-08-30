@@ -7,7 +7,7 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
-    public partial class DishRequestDto
+    public partial class Request
     {
         /// <summary>
         /// 分组
@@ -19,10 +19,7 @@
         /// ID 编号
         /// </summary>
         [JsonProperty("id")]
-        public long Id { get; set; }
-
-        [JsonProperty("image")]
-        public string Image { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// 名称
@@ -34,6 +31,27 @@
         public string Price { get; set; }
 
         [JsonProperty("recipe")]
-        public string Recipe { get; set; }
+        public List<Recipe> Recipe { get; set; }
+    }
+
+    public partial class Recipe
+    {
+        /// <summary>
+        /// 数量
+        /// </summary>
+        [JsonProperty("account")]
+        public double Account { get; set; }
+
+        /// <summary>
+        /// 食材ID
+        /// </summary>
+        [JsonProperty("IngredientId")]
+        public string IngredientId { get; set; }
+
+        /// <summary>
+        /// 食材名
+        /// </summary>
+        [JsonProperty("IngredientName")]
+        public string IngredientName { get; set; }
     }
 }

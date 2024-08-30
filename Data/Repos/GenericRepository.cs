@@ -70,6 +70,54 @@ namespace Elderly_Canteen.Data.Repos
 
                 return await query.ToListAsync();
             }
+
+            //通用的复合查找
+            public async Task<T> FindByCompositeKeyAsync<T>(params object[] keyValues) where T : class
+            {
+                var dbSet = _context.Set<T>();
+
+                // 使用反射获取实体的主键属性
+                var keyProperties = _context.Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties;
+
+                if (keyValues.Length != keyProperties.Count)
+                {
+                    throw new ArgumentException("Number of key values does not match the number of primary key properties.");
+                }
+
+                // 查找实体
+                var entity = await dbSet.FindAsync(keyValues);
+                return entity;
+            }
+
+            //通用复合删除
+            public async Task DeleteByCompositeKeyAsync<T>(params object[] keyValues) where T : class
+            {
+                var dbSet = _context.Set<T>();
+
+                // 使用反射获取实体的主键属性
+                var keyProperties = _context.Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties;
+
+                if (keyValues.Length != keyProperties.Count)
+                {
+                    throw new ArgumentException("Number of key values does not match the number of primary key properties.");
+                }
+
+                // 查找实体
+                var entity = await dbSet.FindAsync(keyValues);
+
+                if (entity != null)
+                {
+                    dbSet.Remove(entity);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    throw new Exception("Entity not found.");
+                }
+            }
+
+
         }
+
     }
 }

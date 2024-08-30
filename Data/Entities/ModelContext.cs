@@ -104,7 +104,7 @@ public partial class ModelContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("ACCOUNTNAME");
             entity.Property(e => e.Address)
-                .HasMaxLength(100)
+                .HasMaxLength(150)
                 .IsUnicode(false)
                 .HasColumnName("ADDRESS");
             entity.Property(e => e.Birthdate)
@@ -136,7 +136,7 @@ public partial class ModelContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("PHONENUM");
             entity.Property(e => e.Portrait)
-                .HasMaxLength(256)
+                .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("PORTRAIT");
             entity.Property(e => e.Verifycode)
@@ -163,7 +163,7 @@ public partial class ModelContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("ACCOUNT_NAME");
             entity.Property(e => e.Address)
-                .HasMaxLength(100)
+                .HasMaxLength(150)
                 .IsUnicode(false)
                 .HasColumnName("ADDRESS");
             entity.Property(e => e.BirthDate)
@@ -348,7 +348,7 @@ public partial class ModelContext : DbContext
                 .ValueGeneratedOnAdd()
                 .HasColumnName("CART_ID");
             entity.Property(e => e.CusAddress)
-                .HasMaxLength(100)
+                .HasMaxLength(150)
                 .IsUnicode(false)
                 .HasColumnName("CUS_ADDRESS");
             entity.Property(e => e.CustomerPhone)
@@ -505,7 +505,7 @@ public partial class ModelContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("EMPLOYEE_ID");
             entity.Property(e => e.Address)
-                .HasMaxLength(20)
+                .HasMaxLength(150)
                 .IsUnicode(false)
                 .HasColumnName("ADDRESS");
             entity.Property(e => e.EmployeeName)
@@ -752,8 +752,6 @@ public partial class ModelContext : DbContext
 
             entity.HasIndex(e => e.ExpirationTime, "IDX_REPOSITORY_EXPIRATION");
 
-            entity.HasIndex(e => e.IngredientName, "IDX_REPOSITORY_NAME");
-
             entity.Property(e => e.IngredientId)
                 .HasMaxLength(10)
                 .IsUnicode(false)
@@ -762,26 +760,16 @@ public partial class ModelContext : DbContext
                 .HasColumnType("DATE")
                 .HasColumnName("EXPIRATION_TIME");
             entity.Property(e => e.HighConsumption)
-                .HasColumnType("NUMBER(1)")
+                .HasPrecision(2)
                 .HasColumnName("HIGH_CONSUMPTION");
-            entity.Property(e => e.IngredientName)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("INGREDIENT_NAME");
             entity.Property(e => e.RemainAmount)
                 .HasPrecision(10)
                 .HasColumnName("REMAIN_AMOUNT");
 
-            entity.HasOne(d => d.Ingredient).WithMany(p => p.RepositoryIngredients)
+            entity.HasOne(d => d.Ingredient).WithMany(p => p.Repositories)
                 .HasForeignKey(d => d.IngredientId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_REPOSITORY_INGREDIENT");
-
-            entity.HasOne(d => d.IngredientNameNavigation).WithMany(p => p.RepositoryIngredientNameNavigations)
-                .HasPrincipalKey(p => p.IngredientName)
-                .HasForeignKey(d => d.IngredientName)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_REPOSITORY_INGREDIENT_NAME");
         });
 
         modelBuilder.Entity<Restock>(entity =>
@@ -1191,6 +1179,7 @@ public partial class ModelContext : DbContext
                 .HasPrecision(10)
                 .HasColumnName("STOCK");
         });
+        modelBuilder.HasSequence("EMPLOYEEID_SEQ");
 
         OnModelCreatingPartial(modelBuilder);
     }
