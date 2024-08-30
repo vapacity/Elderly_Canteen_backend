@@ -143,10 +143,10 @@ namespace Elderly_Canteen.Services.Implements
         }
 
 
-        public async Task<RepoResponseDto?> DeleteIngredient(string ingreId)
+        public async Task<RepoResponseDto?> DeleteIngredient(string ingreId,DateTime expiry)
         {
             var existedIngre = await _ingreRepository.GetByIdAsync(ingreId);
-            var existedRepo = await _repoRepository.GetByIdAsync(ingreId);
+            var existedRepo = await _repoRepository.FindByCompositeKeyAsync<Repository>(ingreId,expiry);
             if (existedRepo == null || existedIngre == null)
                 return new RepoResponseDto
                 {
@@ -155,7 +155,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             else
             {
-                await _repoRepository.DeleteAsync(ingreId);
+                await _repoRepository.DeleteByCompositeKeyAsync<Repository>(ingreId,expiry);
                 await _ingreRepository.DeleteAsync(ingreId);
                 return new RepoResponseDto
                 {

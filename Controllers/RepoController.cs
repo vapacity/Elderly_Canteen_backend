@@ -62,10 +62,10 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
-        [HttpPut("delete/{id}")]
-        public async Task<ActionResult> DeleteIngredient(string id)
+        [HttpDelete("delete/{id}/{expiry}")]
+        public async Task<ActionResult> DeleteIngredient(string id,DateTime expiry)
         {
-            var response = await _repoService.DeleteIngredient(id);
+            var response = await _repoService.DeleteIngredient(id,expiry);
             if (response.success == false)
             {
                 return BadRequest(response);
