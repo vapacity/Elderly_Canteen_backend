@@ -5,7 +5,7 @@ namespace Elderly_Canteen.Services.Interfaces
 {
     public interface IRepoService
     {
-        Task<RepoResponseDto> GetRepo(string ingreId);
+        Task<AllResponseDto> GetRepo();
         Task<RepoResponseDto> AddIngredient(IngreRequestDto dto);
         Task<RepoResponseDto> UpdateIngredient(IngreRequestDto dto,string id);
         Task<RepoResponseDto?> DeleteIngredient(string ingreId,DateTime expiry);

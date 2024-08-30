@@ -18,10 +18,51 @@ namespace Elderly_Canteen.Services.Implements
             _ingreRepository = ingreRepository;
         }
 
-        public async Task<RepoResponseDto> GetRepo(string ingreId)
+        public async Task<AllResponseDto> GetRepo()
         {
-            return null;
+            try
+            {
+                // 获取所有 Repository 和 Ingredient 数据
+                var repositories = await _repoRepository.GetAllAsync();
+                var ingredients = await _ingreRepository.GetAllAsync();
+
+                // 执行连接查询
+                var query = from repo in repositories
+                            join ing in ingredients
+                            on repo.IngredientId equals ing.IngredientId
+                            select new IngredientDto
+                            {
+                                Account = repo.RemainAmount, // 假设 repo 中有 RemainAmount 字段
+                                Expiry = repo.ExpirationTime, // 将 DateTime 转为 double
+                                Grade = repo.HighConsumption, // 假设 HighConsumption 是 byte 类型，转换为 string
+                                IngredientId = ing.IngredientId,
+                                IngredientName = ing.IngredientName
+                            };
+
+                var ingredientsList = query.ToList();
+
+                return new AllResponseDto
+                {
+                    Ingredients = ingredientsList,
+                    Message = "Data retrieved successfully",
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                // 记录异常（可选）
+                Console.WriteLine($"An error occurred: {ex.Message}");
+
+                return new AllResponseDto
+                {
+                    Ingredients = new List<IngredientDto>(),
+                    Message = "An error occurred while retrieving data.",
+                    Success = false
+                };
+            }
         }
+
+
         public async Task<RepoResponseDto> AddIngredient(IngreRequestDto dto)
         {
             string ingreName = dto.IngredientName;
@@ -142,7 +183,6 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
-
         public async Task<RepoResponseDto?> DeleteIngredient(string ingreId,DateTime expiry)
         {
             var existedIngre = await _ingreRepository.GetByIdAsync(ingreId);
@@ -164,6 +204,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
         }
+        
         public async Task<RepoResponseDto> Restock(string id)
         {
             return null;

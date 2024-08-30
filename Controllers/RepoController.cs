@@ -17,6 +17,17 @@ namespace Elderly_Canteen.Controllers
             _repoService = repoService;
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> GetAllIngredient()
+        {
+            var response = await _repoService.GetRepo();
+            if (response == null)
+            {
+                return NotFound();
+            }
+            return Ok(response);
+        }
+
         [HttpPost("add")]
         public async Task<ActionResult> AddIngredient(IngreRequestDto dto)
         {
