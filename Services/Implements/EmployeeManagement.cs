@@ -146,7 +146,7 @@ public class EmployeeManagement : IEmployeeManagement
             EmployeePosition = employeeDto.EmployeePosition,
             Salary = employeeDto.Salary,
             IdCard = employeeDto.IdCard,
-            Ispaidthismonth = employeeDto.IsPaidThisMonth
+            Ispaidthismonth = false
         };
         //调用仓储模式的AddAsync方法
         await _employeeRepository.AddAsync(employee);
@@ -172,7 +172,7 @@ public class EmployeeManagement : IEmployeeManagement
         employeeToModify.EmployeePosition = employeeDto.EmployeePosition;
         employeeToModify.Salary = employeeDto.Salary;
         employeeToModify.IdCard = employeeDto.IdCard;
-        employeeToModify.Ispaidthismonth = employeeDto.IsPaidThisMonth;
+        // employeeToModify.Ispaidthismonth = employeeDto.IsPaidThisMonth;
 
         // 保存更改
         await _employeeRepository.UpdateAsync(employeeToModify);
