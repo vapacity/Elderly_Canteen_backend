@@ -46,6 +46,17 @@ namespace Elderly_Canteen.Data.Repos
                 await _context.SaveChangesAsync();
             }
 
+            public async Task UpdateAsync(Expression<Func<T, bool>> predicate, Action<T> updateAction)
+            {
+                var entities = await _dbSet.Where(predicate).ToListAsync();
+                foreach (var entity in entities)
+                {
+                    updateAction(entity);
+                    _context.Entry(entity).State = EntityState.Modified;
+                }
+                await _context.SaveChangesAsync();
+            }
+
             public async Task DeleteAsync(object id)
             {
                 T entity = await _dbSet.FindAsync(id);

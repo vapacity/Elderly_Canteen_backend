@@ -27,13 +27,23 @@ namespace Elderly_Canteen.Services.Implements
     public class AccountService : IAccountService
     {
         private readonly IGenericRepository<Account> _accountRepository;
+        //这是为了注销用户的时候不把财务信息删除掉，因此把该账户的财务记录的id改为“DELETED”，其他的应该级联删除
+        private readonly IGenericRepository<Finance> _financeRepository;
+        private readonly IGenericRepository<Donation> _donationRepository;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _memoryCache;
         private readonly IWebHostEnvironment _environment;
 
-        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IMemoryCache memoryCache,IWebHostEnvironment environment)
+        public AccountService(IGenericRepository<Account> accountRepository,
+                            IGenericRepository<Finance> financeRepository,
+                            IGenericRepository<Donation> donationRepository,
+                            IConfiguration configuration,
+                            IMemoryCache memoryCache,
+                            IWebHostEnvironment environment)
         {
             _accountRepository = accountRepository;
+            _financeRepository = financeRepository;
+            _donationRepository = donationRepository;
             _configuration = configuration;
             _memoryCache = memoryCache;
             _environment = environment;
@@ -145,7 +155,24 @@ namespace Elderly_Canteen.Services.Implements
             _memoryCache.Remove(request.PhoneNum);
             return response;
         }
-       
+        //验证码验证
+        public async Task<VerifyOTPResponseDto<OTPLoginResponseDto>> VerifyOTPWithoutUserCheckAsync(VerifyOTPRequestDto request)
+        {
+            var response = new VerifyOTPResponseDto<OTPLoginResponseDto>();
+            // 从缓存中获取验证码
+            var savedCode = await GetOTPAsync(request.PhoneNum);
+            if (savedCode == null || savedCode != request.Code)
+            {
+                response.Success = false;
+                response.Msg = "验证码无效或已过期";
+                return response;
+            }
+            response.Success = true;
+            response.Msg = "验证成功";
+            // 验证通过，删除缓存中的验证码
+            _memoryCache.Remove(request.PhoneNum);
+            return response;
+        }
 
         //登录逻辑
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest)
@@ -189,6 +216,23 @@ namespace Elderly_Canteen.Services.Implements
         //注册逻辑
         public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto, IFormFile avatar)
         {
+            // 验证验证码
+            var verifyOtpResult = await VerifyOTPWithoutUserCheckAsync(new VerifyOTPRequestDto
+            {
+                PhoneNum = registerRequestDto.phone,
+                Code = registerRequestDto.verificationCode 
+            });
+
+            if (!verifyOtpResult.Success)
+            {
+                return new RegisterResponseDto
+                {
+                    registerSuccess = false,
+                    msg = verifyOtpResult.Msg,
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                };
+            }
+
             // 检查用户是否存在
             var existingAccount = await _accountRepository.GetAll()
                 .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.phone);
@@ -431,6 +475,53 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
+        // 改绑手机
+        public async Task<PhoneResponseDto> ChangePhone(PhoneRequestDto request, string accountId)
+        {
+            // 检查数据库中是否已存在相同的手机号
+            var existingAccount = await _accountRepository.GetAll()
+                .FirstOrDefaultAsync(a => a.Phonenum == request.NewPhoneNum && a.Accountid != accountId);
+
+            if (existingAccount != null)
+            {
+                return new PhoneResponseDto
+                {
+                    success = false,
+                    msg = "手机号已被占用",
+                };
+            }
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return new PhoneResponseDto
+                {
+                    success = false,
+                    msg = "用户验证失败",
+                };
+            }
+            account.Phonenum = request.NewPhoneNum;
+            await _accountRepository.UpdateAsync(account);
+            return new PhoneResponseDto
+            {
+                success = true,
+                msg = "改绑成功",
+            };
+        }
+
+        // 验证用户输入的旧密码是否正确
+        public async Task<bool> VerifyPassword(string oldPassword, string accountId)
+        {
+            // 从数据库获取用户存储的密码
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return false;
+            }
+
+            // 比较旧密码
+            return oldPassword == account.Password;
+        }
+
         // 修改密码逻辑
         public async Task<bool> ChangePassword(string password,string accountId)
         {
@@ -443,6 +534,41 @@ namespace Elderly_Canteen.Services.Implements
             await _accountRepository.UpdateAsync(account);
             return true;
         }
+
+        //注销账户逻辑
+        public async Task<bool> DeleteAccountAsync(string accountId)
+        {
+            try
+            {
+                var account = await _accountRepository.GetByIdAsync(accountId);
+
+                if (account == null)
+                {
+                    return false;
+                }
+                // 如果注销账户在财务记录中，更新财务记录，将 accountId 设置为特殊值
+                await _financeRepository.UpdateAsync(
+                    f => f.AccountId == accountId,
+                    f => f.AccountId = "DELETED");
+                await _donationRepository.UpdateAsync(
+                    f => f.AccountId == accountId,
+                    f => f.AccountId = "DELETED");
+
+                await _accountRepository.DeleteAsync(accountId);
+
+                return true;
+            }
+            catch
+            {
+                // 这里可以添加日志记录以便调试
+                return false;
+            }
+        }
+
+
+
+
+
 
         //以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用
         private string GenerateJwtToken(Account account)
