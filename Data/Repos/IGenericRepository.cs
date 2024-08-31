@@ -10,6 +10,7 @@ namespace Elderly_Canteen.Data.Repos
         Task<T> GetByIdAsync(object id);
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
+        Task UpdateAsync(Expression<Func<T, bool>> predicate, Action<T> updateAction);
         Task DeleteAsync(object id);
         Task<IEnumerable<T>> FindByConditionAsync(Expression<Func<T, bool>> expression);
         Task<List<T>> GetWithIncludesAsync(params Expression<Func<T, object>>[] includeProperties);

@@ -15,7 +15,7 @@ public class EmployeeController : ControllerBase
         _employeeManagement = employeeManagement;
     }
 
-    [HttpGet("search")]
+    [HttpGet("getInfo")]
     public async Task<ActionResult<IEnumerable<EmployeeInfoResponseDto>>> GetAllEmployees()
     {
         var employees = await _employeeManagement.GetAllEmployeesAsync();
