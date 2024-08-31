@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Elderly_Canteen.Data;
 using Elderly_Canteen.Data.Entities;
 using System.Linq.Expressions;
+using Elderly_Canteen.Services.Implements;
 namespace Elderly_Canteen.Data.Repos
 {
     namespace Elderly_Canteen.Data.Repos
@@ -115,7 +116,6 @@ namespace Elderly_Canteen.Data.Repos
                     throw new Exception("Entity not found.");
                 }
             }
-
 
         }
 

@@ -50,6 +50,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IDonateService, DonateService>();
 builder.Services.AddScoped<IEmployeeManagement, EmployeeManagement>();
 builder.Services.AddMemoryCache();//配置内存缓存
+builder.Services.AddScoped<IIngreService, IngreService>();
 builder.Services.AddScoped<IRepoService, RepoService>();
 
 // JWT 身份验证

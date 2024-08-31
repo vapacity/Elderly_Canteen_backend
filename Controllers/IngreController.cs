@@ -4,25 +4,24 @@ using Elderly_Canteen.Data.Dtos.Repository;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Elderly_Canteen.Controllers
 {
-    [Route("api/repo")]
+    [Route("api/ingredients")]
     [ApiController]
-    public class RepoController : ControllerBase
+    public class IngreController : ControllerBase
     {
-        private readonly IRepoService _repoService;
+        private readonly IIngreService _ingreService;
 
-        public RepoController(IRepoService repoService)
+        public IngreController(IIngreService ingreService)
         {
-            _repoService = repoService;
+            _ingreService = ingreService;
         }
 
         [HttpGet("search")]
         public async Task<IActionResult> GetAllIngredient()
         {
-            var response = await _repoService.GetRepo();
+            var response = await _ingreService.GetRepo();
             if (response == null)
             {
                 return NotFound();
@@ -30,7 +29,7 @@ namespace Elderly_Canteen.Controllers
             return Ok(response);
         }
 
-        /*[HttpPost("add")]
+        [HttpPost("add")]
         public async Task<ActionResult> AddIngredient(IngreRequestDto dto)
         {
             if (dto == null)
@@ -41,7 +40,7 @@ namespace Elderly_Canteen.Controllers
                     success = false,
                 });
             }
-            var response = await _repoService.AddIngredient(dto);
+            var response = await _ingreService.AddIngredient(dto);
             if (response.success == false)
             {
                 return BadRequest(response);
@@ -52,9 +51,9 @@ namespace Elderly_Canteen.Controllers
             }
 
         }
-*/
+
         [HttpPut("update")]
-        public async Task<ActionResult> UpdateRepo(RepoRequestDto dto)
+        public async Task<ActionResult> UpdateIngredient([FromBody]IngreRequestDto dto)
         {
             if (dto == null)
             {
@@ -64,7 +63,7 @@ namespace Elderly_Canteen.Controllers
                     success = false,
                 });
             }
-            var response = await _repoService.UpdateRepo(dto);
+            var response = await _ingreService.UpdateIngredient(dto);
             if (response.success == false)
             {
                 return BadRequest(response);
@@ -75,10 +74,10 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
-        [HttpDelete("delete/{id}/{expiry}")]
-        public async Task<ActionResult> DeleteRepo(string id, DateTime expiry)
+        [HttpDelete("delete/{id}")]
+        public async Task<ActionResult> DeleteIngredient(string id)
         {
-            var response = await _repoService.DeleteRepo(id, expiry);
+            var response = await _ingreService.DeleteIngredient(id);
             if (response.success == false)
             {
                 return BadRequest(response);
@@ -87,27 +86,6 @@ namespace Elderly_Canteen.Controllers
             {
                 return Ok(response);
             }
-        }
-
-        [HttpPost("restock")]
-        public async Task<ActionResult> RestockStuff(RestockRequestDto dto)
-        {
-            var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var response = await _repoService.Restock(dto, adminId);
-            if(response.Success == true)
-            {
-                return Ok(response);
-            }
-            else
-            {
-                return BadRequest(response);
-            }
-        }
-
-        [HttpGet("search/restock")]
-        public async Task<ActionResult> GetRestockHistory()
-        {
-            return Ok();
         }
     }
 }

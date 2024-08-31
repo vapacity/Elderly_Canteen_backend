@@ -10,36 +10,40 @@
     /// <summary>
     /// Request
     /// </summary>
-    public partial class AllResponseDto
+    public partial class RestockResponseDto
     {
-        [JsonProperty("ingredients")]
-        public List<IngredientDto> Ingredients { get; set; }
+        [JsonProperty("data")]
+        public RestockData Data { get; set; }
 
         [JsonProperty("message")]
         public string Message { get; set; }
 
         [JsonProperty("success")]
         public bool Success { get; set; }
+
     }
 
-    /// <summary>
-    /// ingredient
-    /// </summary>
-    public partial class IngredientDto
+    public partial class RestockData
     {
-        [JsonProperty("account")]
-        public double Account { get; set; }
+        [JsonProperty("amount")]
+        public int Amount { get; set; }
 
         [JsonProperty("expiry")]
         public DateTime Expiry { get; set; }
 
-        [JsonProperty("grade")]
-        public byte Grade { get; set; }
+        [JsonProperty("financeId")]
+        public string FinanceId { get; set; }
 
-        [JsonProperty("IngredientId")]
+        [JsonProperty("grade")]
+        public int Grade { get; set; }
+
+        [JsonProperty("ingredientId")]
         public string IngredientId { get; set; }
 
-        [JsonProperty("IngredientName")]
+        [JsonProperty("ingredientName")]
         public string IngredientName { get; set; }
+
+        [JsonProperty("price")]
+        public decimal Price { get; set; }
     }
 }

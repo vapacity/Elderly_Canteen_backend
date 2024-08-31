@@ -1,15 +1,17 @@
-﻿using Elderly_Canteen.Data.Dtos.Repository;
+﻿using Elderly_Canteen.Data.Dtos.Ingredient;
+using Elderly_Canteen.Data.Dtos.Repository;
 using Elderly_Canteen.Data.Entities;
 
 namespace Elderly_Canteen.Services.Interfaces
 {
     public interface IRepoService
     {
-        Task<AllResponseDto> GetRepo();
-        Task<RepoResponseDto> AddIngredient(IngreRequestDto dto);
-        Task<RepoResponseDto> UpdateIngredient(IngreRequestDto dto,string id);
-        Task<RepoResponseDto?> DeleteIngredient(string ingreId,DateTime expiry);
-        Task<RepoResponseDto> Restock(string ingreId);
+        Task<AllRepoResponseDto> GetRepo();
+        //Task<RepoResponseDto> AddRepo(RepoRequestDto dto);
+        Task<RepoResponseDto> UpdateRepo(RepoRequestDto dto);
+        Task<RepoResponseDto?> DeleteRepo(string ingreId,DateTime expiry);
+        Task<RestockResponseDto> Restock(RestockRequestDto dto,string adminId);
+        Task<List<RestockResponseDto>> GetRestockHistory();
 
     }
 }
