@@ -4,4 +4,10 @@
     {
         public string selfStatement { get; set; }
     }
+
+    public class VolunteerReviewApplicationDto
+    {
+        public string reason { get; set; }
+        public string status { get; set; }
+    }
 }
