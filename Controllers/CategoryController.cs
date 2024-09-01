@@ -19,7 +19,7 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> GetAllCategories(string name)
+        public async Task<IActionResult> GetAllCategories(string? name)
         {
             var response = await _cateService.GetCate(name);
             if (response == null)

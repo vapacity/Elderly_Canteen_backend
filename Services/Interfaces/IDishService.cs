@@ -3,8 +3,7 @@ namespace Elderly_Canteen.Services.Interfaces
 {
     public interface IDishService
     {
-        //Task<List<DishResponseDto>> GetDish();
-        //Task<DishResponseDto> AddDishAsync(DishRequestDto dishRequestDto);
-        //Task<>
+        Task<DishResponseDto> AddDish(DishRequestDto dto);
+
     }
 }

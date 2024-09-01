@@ -7,19 +7,19 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
+    /// <summary>
+    /// Request
+    /// </summary>
     public partial class DishRequestDto
     {
         /// <summary>
         /// 分组
         /// </summary>
-        [JsonProperty("category")]
-        public string Category { get; set; }
+        [JsonProperty("cateId")]
+        public string CateId { get; set; }
 
-        /// <summary>
-        /// ID 编号
-        /// </summary>
-        [JsonProperty("id")]
-        public string Id { get; set; }
+        [JsonProperty("formula")]
+        public List<FormulaDto> Formula { get; set; }
 
         /// <summary>
         /// 名称
@@ -28,30 +28,7 @@
         public string Name { get; set; }
 
         [JsonProperty("price")]
-        public string Price { get; set; }
-
-        [JsonProperty("recipe")]
-        public List<Recipe> Recipe { get; set; }
+        public decimal Price { get; set; }
     }
 
-    public partial class Recipe
-    {
-        /// <summary>
-        /// 数量
-        /// </summary>
-        [JsonProperty("account")]
-        public double Account { get; set; }
-
-        /// <summary>
-        /// 食材ID
-        /// </summary>
-        [JsonProperty("IngredientId")]
-        public string IngredientId { get; set; }
-
-        /// <summary>
-        /// 食材名
-        /// </summary>
-        [JsonProperty("IngredientName")]
-        public string IngredientName { get; set; }
-    }
 }
