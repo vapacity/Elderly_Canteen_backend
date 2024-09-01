@@ -35,6 +35,14 @@
 
         [JsonProperty("price")]
         public decimal Price { get; set; }
+
+        [JsonProperty("cateId")]
+        public string CateId {  get; set; }
+
+        [JsonProperty("category")]
+        public string Category { get; set; }
+        
+        //缺图片
     }
 
     public partial class FormulaDto

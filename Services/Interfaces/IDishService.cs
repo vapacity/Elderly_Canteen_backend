@@ -6,8 +6,9 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<DishResponseDto> AddDish(DishRequestDto dto);
         Task<DishResponseDto> UpdateDish(DishRequestDto dto);
         Task<DishResponseDto> DeleteDish(string dishId);
-        Task<AllDishResponseDto> SearchDishesAsync(string name);
 
         Task UploadImageAsync(string id, IFormFile image);
+
+        Task<AllDishResponseDto> SearchDishesAsync(string? name,string? category);
     }
 }

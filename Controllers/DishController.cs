@@ -21,9 +21,9 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult> SearchDishes(string? name)
+        public async Task<ActionResult> SearchDishes(string? name,string? category)
         {
-            var response = await _dishService.SearchDishesAsync(name);
+            var response = await _dishService.SearchDishesAsync(name,category);
             if (!response.Success)
             {
                 return BadRequest(response);

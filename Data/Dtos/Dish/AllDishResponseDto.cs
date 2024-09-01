@@ -4,7 +4,7 @@ namespace Elderly_Canteen.Data.Dtos.Dish
 {
     public class AllDishResponseDto
     {
-        [JsonProperty("dish")]
+        [JsonProperty("response")]
         public List<DishDto> Dish { get; set; }
 
         [JsonProperty("msg")]
