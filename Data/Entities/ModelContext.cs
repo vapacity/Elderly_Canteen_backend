@@ -455,7 +455,7 @@ public partial class ModelContext : DbContext
             entity.Property(e => e.Price)
                 .HasColumnType("NUMBER(10,2)")
                 .HasColumnName("PRICE");
-
+            entity.Property(e => e.ImageUrl).HasColumnName("IMAGEURL").HasMaxLength(255);
             entity.HasOne(d => d.Cate).WithMany(p => p.Dishes)
                 .HasForeignKey(d => d.CateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

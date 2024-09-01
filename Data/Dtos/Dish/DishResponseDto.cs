@@ -41,7 +41,9 @@
 
         [JsonProperty("category")]
         public string Category { get; set; }
-        
+
+        [JsonProperty("image")]
+        public string? Image { get; set; }
         //缺图片
     }
 

@@ -15,6 +15,8 @@ public partial class Dish
 
     public byte[]? Picture { get; set; }
 
+    public string? ImageUrl {  get; set; } 
+
     public virtual Category Cate { get; set; } = null!;
 
     public virtual ICollection<Formula> Formulas { get; set; } = new List<Formula>();

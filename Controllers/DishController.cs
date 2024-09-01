@@ -108,9 +108,9 @@ namespace Elderly_Canteen.Controllers
         {
             try
             {
-                await _dishService.UploadImageAsync(id,image);
+                await _dishService.UploadImageAsync(id, image);
 
-                return Ok(new { Success = true, Msg = "图片上传成功"});
+                return Ok(new { Success = true, Msg = "图片上传成功" });
             }
             catch (ArgumentException ex)
             {

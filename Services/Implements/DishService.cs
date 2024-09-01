@@ -4,6 +4,8 @@ using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Data.Repos;
 using Elderly_Canteen.Services.Interfaces;
 using System.IO;
+using Aliyun.OSS;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -13,16 +15,18 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<Formula> _formulaRepository;
         private readonly IGenericRepository<Ingredient> _ingredientRepository;
         private readonly IGenericRepository<Category> _categoryRepository;
-
+        private readonly IOssService _ossService;
         public DishService(IGenericRepository<Dish> dishRepository,
                            IGenericRepository<Formula> formulaRepository,
                            IGenericRepository<Ingredient> ingredientRepository,
-                           IGenericRepository<Category> categoryRepository)
+                           IGenericRepository<Category> categoryRepository,
+                           IOssService ossService)
         {
             _dishRepository = dishRepository;
             _formulaRepository = formulaRepository;
             _categoryRepository = categoryRepository;
             _ingredientRepository = ingredientRepository;
+            _ossService = ossService;
         }
 
         public async Task<DishResponseDto> AddDish(DishRequestDto dto)
@@ -301,7 +305,8 @@ namespace Elderly_Canteen.Services.Implements
                     IngredientId = f.IngredientId,
                     Amount = f.Amount,
                     IngredientName = f.Ingredient?.IngredientName // 处理可能为 null 的情况
-                }).ToList()
+                }).ToList(),
+                Image = dish.Picture != null ? Convert.ToBase64String(dish.Picture) : string.Empty // 处理可能为 null 的情况
             }).ToList();
 
             // 返回 AllDishResponseDto
@@ -312,25 +317,32 @@ namespace Elderly_Canteen.Services.Implements
                 Success = true
             };
         }
-        public async Task UploadImageAsync(string id, IFormFile image)
+
+        public async Task<bool> UploadImageAsync(string id, IFormFile image)
         {
             if (image == null || image.Length == 0)
             {
                 throw new ArgumentException("接收图片失败");
             }
 
-            using (var memoryStream = new MemoryStream())
+            var dish = await _dishRepository.GetByIdAsync(id);
+            if (dish == null)
             {
-                await image.CopyToAsync(memoryStream);
-                var imageData = memoryStream.ToArray();
-
-                var dish = await _dishRepository.GetByIdAsync(id);
-                dish.Picture = imageData;
-                await _dishRepository.UpdateAsync(dish);
+                throw new ArgumentException("未找到对应的菜品");
             }
+
+            // 上传图片到 OSS
+            var fileName = $"{id}-{dish.DishName}.jpg";
+            var imageUrl = await _ossService.UploadFileAsync(image, fileName);
+
+
+            // 更新数据库中的图片 URL
+            dish.ImageUrl = imageUrl;  // 假设你在 Dish 实体中有一个 ImageUrl 属性
+            await _dishRepository.UpdateAsync(dish);
+            return true;
         }
 
-        private async Task<string> GenerateNewDishIdAsync()
+            private async Task<string> GenerateNewDishIdAsync()
         {
             // 获取数据库中当前 ingredient 表的最大 ID
             var maxId = await _dishRepository.GetAll()
