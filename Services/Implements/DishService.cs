@@ -26,6 +26,7 @@ namespace Elderly_Canteen.Services.Implements
 
         public async Task<DishResponseDto> AddDish(DishRequestDto dto)
         {
+            //检查重名
             var existedName = await _dishRepository.FindByConditionAsync(e => e.DishName == dto.Name);
             if (existedName.Any())
             {
@@ -35,6 +36,7 @@ namespace Elderly_Canteen.Services.Implements
                     Msg = "name already existed",
                 };
             }
+            //检查食材存在性
             foreach(var formula in dto.Formula)
             {
                 var ingredient = await _ingredientRepository.GetByIdAsync(formula.IngredientId);
@@ -47,6 +49,7 @@ namespace Elderly_Canteen.Services.Implements
                     };
                 }
             }
+            //检查类别存在性
             var existedCate = await _categoryRepository.GetByIdAsync(dto.CateId);
             if (existedCate == null) {
                 return new DishResponseDto
@@ -55,6 +58,7 @@ namespace Elderly_Canteen.Services.Implements
                     Msg = "cateId" + dto.CateId + "not found"
                 };
             }
+            //新dish
             var newDishId = await GenerateNewDishIdAsync();
             var newDish = new Dish
             {
@@ -65,6 +69,7 @@ namespace Elderly_Canteen.Services.Implements
             };
             await _dishRepository.AddAsync(newDish);
 
+            //新formula
             foreach(var form in dto.Formula)
             {
                 var newFormula = new Formula
@@ -75,7 +80,19 @@ namespace Elderly_Canteen.Services.Implements
                 };
                 await _formulaRepository.AddAsync(newFormula);
             }
-
+            //获得ingredientname
+            var formulaDtos = new List<FormulaDto>();
+            foreach (var form in dto.Formula)
+            {
+                var ingredient = await _ingredientRepository.GetByIdAsync(form.IngredientId);
+                formulaDtos.Add(new FormulaDto
+                {
+                    IngredientId = form.IngredientId,
+                    Amount = form.Amount,
+                    IngredientName = ingredient?.IngredientName // 通过 ingredient 对象获取 IngredientName
+                });
+            }
+            //返回
             return new DishResponseDto
             {
                 Success = true,
@@ -83,13 +100,9 @@ namespace Elderly_Canteen.Services.Implements
                 Dish = new DishDto
                 {
                     DishId = newDishId,
-                    DishName= dto.Name,
+                    DishName = dto.Name,
                     Price = dto.Price,
-                    Formula = dto.Formula.Select(f => new FormulaDto
-                    {
-                        IngredientId = f.IngredientId,
-                        Amount = f.Amount
-                    }).ToList()
+                    Formula = formulaDtos // 将包含 ingredientName 的 FormulaDto 列表返回
                 }
             };
         }
