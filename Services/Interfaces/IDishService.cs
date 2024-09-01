@@ -4,6 +4,7 @@ namespace Elderly_Canteen.Services.Interfaces
     public interface IDishService
     {
         Task<DishResponseDto> AddDish(DishRequestDto dto);
+        Task<DishResponseDto> UpdateDish(DishRequestDto dto);
 
     }
 }

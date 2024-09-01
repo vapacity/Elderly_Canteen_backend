@@ -29,6 +29,9 @@
 
         [JsonProperty("price")]
         public decimal Price { get; set; }
+
+        [JsonProperty("dishId")]
+        public string? DishId { get; set; }
     }
 
 }

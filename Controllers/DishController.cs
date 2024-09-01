@@ -42,5 +42,28 @@ namespace Elderly_Canteen.Controllers
                 return Ok(response);
             }
         }
+
+        [HttpPost("updateDish")]
+        public async Task<ActionResult> UpdateCategory(DishRequestDto dto)
+        {
+            if (dto == null)
+            {
+                return BadRequest(new DishResponseDto
+                {
+                    Msg = "未接受到数据",
+                    Success = false,
+                    Dish = null
+                });
+            }
+            var response = await _dishService.UpdateDish(dto);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
     }
 }
