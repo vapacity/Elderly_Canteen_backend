@@ -166,12 +166,32 @@ public class EmployeeManagement : IEmployeeManagement
         var employeeToModify = employee.First();
 
         // 更新员工信息
-        employeeToModify.EmployeeName = employeeDto.EmployeeName;
-        employeeToModify.PhoneNum = employeeDto.PhoneNum;
-        employeeToModify.Address = employeeDto.Address;
-        employeeToModify.EmployeePosition = employeeDto.EmployeePosition;
-        employeeToModify.Salary = employeeDto.Salary;
-        employeeToModify.IdCard = employeeDto.IdCard;
+        if (!string.IsNullOrEmpty(employeeDto.EmployeeName))
+        {
+            employeeToModify.EmployeeName = employeeDto.EmployeeName;
+        }
+        if (!string.IsNullOrEmpty(employeeDto.PhoneNum))
+        {
+            employeeToModify.PhoneNum = employeeDto.PhoneNum;
+        }
+        if (!string.IsNullOrEmpty(employeeDto.Address))
+        {
+            employeeToModify.Address = employeeDto.Address;
+        }
+        if (!string.IsNullOrEmpty(employeeDto.EmployeePosition))
+        {
+            employeeToModify.EmployeePosition = employeeDto.EmployeePosition;
+        }
+        //这里薪水为0默认是没修改
+        if (employeeDto.Salary>0)
+        {
+            employeeToModify.Salary = employeeDto.Salary;
+        }
+        if (!string.IsNullOrEmpty(employeeDto.IdCard))
+        {
+            employeeToModify.IdCard = employeeDto.IdCard;
+        }
+
         // employeeToModify.Ispaidthismonth = employeeDto.IsPaidThisMonth;
 
         // 保存更改
