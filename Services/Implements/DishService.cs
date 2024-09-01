@@ -166,7 +166,7 @@ namespace Elderly_Canteen.Services.Implements
             var existingFormulas = await _formulaRepository.FindByConditionAsync(f => f.DishId == dto.DishId);
             foreach (var formula in existingFormulas)
             {
-                await _formulaRepository.DeleteAsync(formula);
+                await _formulaRepository.DeleteByCompositeKeyAsync<Formula>(formula.DishId,formula.IngredientId);
             }
 
             // 插入新的 Formula 记录
