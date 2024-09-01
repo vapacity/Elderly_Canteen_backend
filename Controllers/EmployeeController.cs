@@ -60,12 +60,6 @@ public class EmployeeController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateEmployee(string id, EmployeeInfoRequestDto employeeDto)
     {
-        // 验证传入的 ID 是否与 DTO 中的 EmployeeId 一致
-        if (id != employeeDto.EmployeeId)
-        {
-            return BadRequest(new { success = false, msg = "请求路径中的 ID 与提交的数据不匹配。" });
-        }
-
         try
         {
             // 调用服务层的 UpdateEmployeeAsync 方法更新员工信息
