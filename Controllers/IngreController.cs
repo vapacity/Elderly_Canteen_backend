@@ -21,9 +21,9 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> GetAllIngredient()
+        public async Task<IActionResult> GetAllIngredient(string? name)
         {
-            var response = await _ingreService.GetRepo();
+            var response = await _ingreService.GetRepo(name);
             if (response == null)
             {
                 return NotFound();

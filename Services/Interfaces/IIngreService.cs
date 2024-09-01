@@ -6,7 +6,7 @@ namespace Elderly_Canteen.Services.Interfaces
 {
     public interface IIngreService
     {
-        Task<AllIngreResponseDto> GetRepo();
+        Task<AllIngreResponseDto> GetRepo(string? name);
         Task<IngreResponseDto> AddIngredient(IngreRequestDto dto);
         Task<IngreResponseDto> UpdateIngredient(IngreRequestDto dto);
         Task<IngreResponseDto?> DeleteIngredient(string ingreId);

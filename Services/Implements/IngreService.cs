@@ -18,12 +18,22 @@ namespace Elderly_Canteen.Services.Implements
             _ingreRepository = ingreRepository;
         }
 
-        public async Task<AllIngreResponseDto> GetRepo()
+        public async Task<AllIngreResponseDto> GetRepo(string? name)
         {
             try
             {
-                // Ingredient 数据
-                var ingredients = await _ingreRepository.GetAllAsync();
+                IEnumerable<Ingredient> ingredients;
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    // 如果 name 为空或仅包含空白字符，返回所有食材
+                    ingredients = await _ingreRepository.GetAllAsync();
+                }
+                else
+                {
+                    // 如果 name 不为空，按名称过滤
+                    ingredients = await _ingreRepository.FindByConditionAsync(ing => ing.IngredientName.Contains(name));
+                }
 
                 // 将 ingredients 列表转换为 IngredientDto 列表
                 var ingredientsList = ingredients
@@ -54,6 +64,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
         }
+
 
         public async Task<IngreResponseDto> AddIngredient(IngreRequestDto dto)
         {

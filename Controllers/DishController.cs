@@ -20,8 +20,22 @@ namespace Elderly_Canteen.Controllers
             _dishService = dishService;
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult> SearchDishes(string? name)
+        {
+            var response = await _dishService.SearchDishesAsync(name);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
+
         [HttpPost("addDish")]
-        public async Task<ActionResult> AddCategory(DishRequestDto dto)
+        public async Task<ActionResult> AddDish(DishRequestDto dto)
         {
             if (dto == null)
             {
@@ -43,7 +57,7 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
-        [HttpPost("updateDish")]
+        [HttpPut("updateDish")]
         public async Task<ActionResult> UpdateCategory(DishRequestDto dto)
         {
             if (dto == null)
@@ -65,5 +79,30 @@ namespace Elderly_Canteen.Controllers
                 return Ok(response);
             }
         }
+
+        [HttpDelete("delete/{dishId}")]
+        public async Task<ActionResult> DeleteDish(string dishId)
+        {
+            if (dishId == null)
+            {
+                return BadRequest(new DishResponseDto
+                {
+                    Msg = "未接受到数据",
+                    Success = false,
+                    Dish = null
+                });
+            }
+            var response = await _dishService.DeleteDish(dishId);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
+   
+    
     }
 }

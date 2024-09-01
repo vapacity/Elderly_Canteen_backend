@@ -209,6 +209,110 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
+        public async Task<DishResponseDto> DeleteDish(string dishId)
+        {
+            // 检查菜品是否存在
+            var existingDish = await _dishRepository.GetByIdAsync(dishId);
+            if (existingDish == null)
+            {
+                return new DishResponseDto
+                {
+                    Success = false,
+                    Msg = "DishId " + dishId + " not found"
+                };
+            }
+
+            // 删除与 DishId 相关的 Formula 记录
+            await DeleteByDishIdAsync(dishId);
+
+            // 删除 Dish 记录
+            await _dishRepository.DeleteAsync(dishId);
+
+            // 返回成功消息
+            return new DishResponseDto
+            {
+                Success = true,
+                Msg = "Dish and related formulas deleted successfully"
+            };
+        }
+
+        private async Task DeleteByDishIdAsync(string dishId)
+        {
+            // 查找所有与 DishId 匹配的 Formula 记录
+            var formulasToDelete = await _formulaRepository.FindByConditionAsync(f => f.DishId == dishId);
+
+            // 删除每个找到的 Formula 记录
+            foreach (var formula in formulasToDelete)
+            {
+                await _formulaRepository.DeleteByCompositeKeyAsync<Formula>(formula.DishId, formula.IngredientId);
+            }
+        }
+
+        public async Task<AllDishResponseDto> SearchDishesAsync(string name)
+        {
+            List<Dish> dishes;
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                // 如果 name 为空或仅包含空白字符，返回所有菜品
+                dishes = (await _dishRepository.GetAllAsync()).ToList();
+            }
+            else
+            {
+                // 如果 name 不为空，根据 dishName、ingredientName 和 categoryName 进行模糊搜索
+                dishes = (await _dishRepository.FindByConditionAsync(d =>
+                    d.DishName.Contains(name) ||
+                    d.Formulas.Any(f => f.Ingredient.IngredientName.Contains(name)) ||
+                    d.Cate.CateName.Contains(name)
+                )).ToList();
+            }
+
+            foreach (var dish in dishes)
+            {
+                dish.Formulas = (await _formulaRepository.FindByConditionAsync(f => f.DishId == dish.DishId)).ToList();
+                foreach (var formula in dish.Formulas)
+                {
+                    formula.Ingredient = await _ingredientRepository.GetByIdAsync(formula.IngredientId);
+                }
+            }
+
+            // 构建返回的 AllDishResponseDto
+            var dishDtos = new List<DishDto>();
+
+            foreach (var dish in dishes)
+            {
+                // 查找与菜品关联的 Formula
+                var formulaDtos = dish.Formulas.Select(f => new FormulaDto
+                {
+                    IngredientId = f.IngredientId,
+                    Amount = f.Amount,
+                    IngredientName = f.Ingredient?.IngredientName
+                }).ToList();
+
+                // 构建 DishDto
+                var dishDto = new DishDto
+                {
+                    DishId = dish.DishId,
+                    DishName = dish.DishName,
+                    Price = dish.Price,
+                    Formula = formulaDtos
+                };
+
+                dishDtos.Add(dishDto);
+            }
+
+            // 返回 AllDishResponseDto
+            return new AllDishResponseDto
+            {
+                Dish = dishDtos,
+                Msg = "success",
+                Success = true
+            };
+        }
+
+
+
+
         private async Task<string> GenerateNewDishIdAsync()
         {
             // 获取数据库中当前 ingredient 表的最大 ID
