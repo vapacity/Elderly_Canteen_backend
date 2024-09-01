@@ -1,6 +1,7 @@
 ﻿using Elderly_Canteen.Data.Dtos.EmployeeInfo;
 using Elderly_Canteen.Data.Dtos.Ingredient;
 using Elderly_Canteen.Data.Dtos.Repository;
+using Elderly_Canteen.Filter;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ namespace Elderly_Canteen.Controllers
 {
     [Route("api/ingredients")]
     [ApiController]
+    [AuthorizeRole("admin")]
     public class IngreController : ControllerBase
     {
         private readonly IIngreService _ingreService;

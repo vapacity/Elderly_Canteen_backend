@@ -7,7 +7,7 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
-    public partial class Request
+    public partial class DishRequestDto
     {
         /// <summary>
         /// 分组

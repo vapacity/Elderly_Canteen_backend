@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Security.Principal;
-
+using Elderly_Canteen.Filter;
 namespace Elderly_Canteen.Controllers
 {
     [Route("api/repo")]
     [ApiController]
+    [AuthorizeRole("admin")]
     public class RepoController : ControllerBase
     {
         private readonly IRepoService _repoService;
@@ -20,17 +21,9 @@ namespace Elderly_Canteen.Controllers
             _repoService = repoService;
         }
 
-        [HttpGet("search")]
+        [HttpGet("search")]   
         public async Task<IActionResult> GetAllIngredient(string? name)
         {
-            var identity = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (identity != "admin")
-                return BadRequest(new RestockResponseDto
-                {
-                    Success = false,
-                    Message = "you are not administrator",
-                    Data = null,
-                });
             var response = await _repoService.GetRepo(name);
             if (response == null)
             {
@@ -65,14 +58,6 @@ namespace Elderly_Canteen.Controllers
         [HttpPut("update")]
         public async Task<ActionResult> UpdateRepo(RepoRequestDto dto)
         {
-            var identity = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (identity != "admin")
-                return BadRequest(new RestockResponseDto
-                {
-                    Success = false,
-                    Message = "you are not administrator",
-                    Data = null,
-                });
             if (dto == null)
             {
                 return BadRequest(new IngreResponseDto
@@ -95,14 +80,6 @@ namespace Elderly_Canteen.Controllers
         [HttpDelete("delete/{id}/{expiry}")]
         public async Task<ActionResult> DeleteRepo(string id, DateTime expiry)
         {
-            var identity = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (identity != "admin")
-                return BadRequest(new RestockResponseDto
-                {
-                    Success = false,
-                    Message = "you are not administrator",
-                    Data = null,
-                });
             var response = await _repoService.DeleteRepo(id, expiry);
             if (response.success == false)
             {
@@ -118,19 +95,11 @@ namespace Elderly_Canteen.Controllers
         public async Task<ActionResult> RestockStuff(RestockRequestDto dto)
         {
             var adminId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var identity = User.FindFirst(ClaimTypes.Role)?.Value;
             if (adminId == null)
                 return BadRequest(new RestockResponseDto
                 {
                     Success = false,
                     Message = "not authoriented",
-                    Data = null,
-                });
-            if(identity != "admin")
-                return BadRequest(new RestockResponseDto
-                {
-                    Success = false,
-                    Message = "you are not administrator",
                     Data = null,
                 });
             var response = await _repoService.Restock(dto, adminId);
@@ -147,14 +116,6 @@ namespace Elderly_Canteen.Controllers
         [HttpGet("search/restock")]
         public async Task<ActionResult> GetRestockHistory()
         {
-            var identity = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (identity != "admin")
-                return BadRequest(new RestockResponseDto
-                {
-                    Success = false,
-                    Message = "you are not administrator",
-                    Data = null,
-                });
             var response = await _repoService.GetRestockHistory();
             if(response.Success != false)
                 return Ok(response);
