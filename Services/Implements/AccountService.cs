@@ -582,7 +582,7 @@ namespace Elderly_Canteen.Services.Implements
                     new Claim(ClaimTypes.NameIdentifier, account.Accountid),
                     new Claim(ClaimTypes.Role, account.Identity),
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
+                Expires = DateTime.UtcNow.AddHours(24),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

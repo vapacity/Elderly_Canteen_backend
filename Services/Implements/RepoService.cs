@@ -15,19 +15,21 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<Ingredient> _ingreRepository;
         private readonly IGenericRepository<Finance> _financeRepository;
         private readonly IGenericRepository<Restock> _restockRepository;
-
+        private readonly IGenericRepository<Administrator> _administratorRepository;
         public RepoService(IGenericRepository<Repository> repoRepository, 
             IGenericRepository<Ingredient> ingreRepository, 
             IGenericRepository<Finance> financeRepository,
-            IGenericRepository<Restock> restockRepository)
+            IGenericRepository<Restock> restockRepository,
+            IGenericRepository<Administrator> administratorRepository)
         {
             _repoRepository = repoRepository;
             _ingreRepository = ingreRepository;
             _financeRepository = financeRepository;
             _restockRepository = restockRepository;
+            _administratorRepository = administratorRepository;
         }
 
-        public async Task<AllRepoResponseDto> GetRepo()
+        public async Task<AllRepoResponseDto> GetRepo(string? name)
         {
             try
             {
@@ -41,12 +43,18 @@ namespace Elderly_Canteen.Services.Implements
                             on repo.IngredientId equals ing.IngredientId
                             select new RepoDto
                             {
-                                Amount = repo.RemainAmount, // 假设 repo 中有 RemainAmount 字段
-                                Expiry = repo.ExpirationTime, // 将 DateTime 转为 double
-                                Grade = repo.HighConsumption, // 假设 HighConsumption 是 byte 类型，转换为 string
+                                Amount = repo.RemainAmount,
+                                Expiry = repo.ExpirationTime,
+                                Grade = repo.HighConsumption,
                                 IngredientId = ing.IngredientId,
                                 IngredientName = ing.IngredientName
                             };
+
+                // 如果提供了 name 参数，进行过滤
+                if (!string.IsNullOrEmpty(name))
+                {
+                    query = query.Where(dto => dto.IngredientName.Contains(name, StringComparison.OrdinalIgnoreCase));
+                }
 
                 var ingredientsList = query.ToList();
 
@@ -59,7 +67,7 @@ namespace Elderly_Canteen.Services.Implements
             }
             catch (Exception ex)
             {
-                // 记录异常（可选）
+                // 记录异常
                 Console.WriteLine($"An error occurred: {ex.Message}");
 
                 return new AllRepoResponseDto
@@ -70,6 +78,8 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
         }
+
+
 
         /*public async Task<IngreResponseDto> AddRepo(RepoRequestDto dto)
         {
@@ -225,11 +235,24 @@ namespace Elderly_Canteen.Services.Implements
             {
                 // 获取食材名称
                 var ingredientName = await _ingreRepository.GetByIdAsync(ingredientId);
+                if (ingredientName == null)
+                {
+                    // 处理食材不存在的情况
+                    return new RestockResponseDto
+                    {
+                        Success = false,
+                        Message = "Ingredient not found.",
+                        Data = null
+                    };
+                }
                 var existedRepo = await _repoRepository.FindByCompositeKeyAsync<Repository>(ingredientId, expiry);
+                
                 if (existedRepo !=null)
                 {
-                    existedRepo.RemainAmount += amount;
-                    await _repoRepository.UpdateAsync(existedRepo);
+                    await _repoRepository.UpdateAsync(
+                        r => r.IngredientId == ingredientId && r.ExpirationTime == expiry,
+                        r => r.RemainAmount += amount
+                    );
                 }
                 else
                 {
@@ -274,13 +297,15 @@ namespace Elderly_Canteen.Services.Implements
                 // 构建响应的数据部分
                 var responseData = new RestockData
                 {
+                    AdministratorId = adminId,
                     Amount = amount,
                     Expiry = expiry,
                     FinanceId = finId,
                     IngredientId = ingredientId,
                     IngredientName = ingredientName?.IngredientName, // 假设 `GetByIdAsync` 返回的是 `Ingredient` 实体
                     Price = price,
-                    Grade = 1 // 假设你需要一个 Grade 值，这里用 1 作为示例
+                    Grade = 1, // 假设你需要一个 Grade 值，这里用 1 作为示例
+                    Date = DateTime.Now,
                 };
 
                 // 返回成功的响应
@@ -304,10 +329,108 @@ namespace Elderly_Canteen.Services.Implements
         }
 
 
-        public async Task<List<RestockResponseDto>> GetRestockHistory()
+        public async Task<AllRestockResponseDto> GetRestockHistory()
         {
-            return null;
+            try
+            {
+                // 获取所有的 Restock 记录
+                var restocks = await _restockRepository.GetAllAsync();
+
+                // 如果没有记录，返回相应的响应
+                if (restocks == null || !restocks.Any())
+                {
+                    return new AllRestockResponseDto
+                    {
+                        Success = true,
+                        Message = "No restock history found.",
+                        Restocks = new List<Restocks>()
+                    };
+                }
+
+                // 收集所有需要查询的 ID
+                var ingredientIds = restocks.Select(r => r.IngredientId).Distinct().ToList();
+                var adminIds = restocks.Select(r => r.AdministratorId).Distinct().ToList();
+                var financeIds = restocks.Select(r => r.FinanceId).Distinct().ToList();
+
+                // 获取所有相关的食材信息
+                var ingredients = new Dictionary<string, Ingredient>();
+                foreach (var id in ingredientIds)
+                {
+                    var ingredient = await _ingreRepository.GetByIdAsync(id);
+                    if (ingredient != null)
+                    {
+                        ingredients[id] = ingredient;
+                    }
+                }
+
+                // 获取所有相关的管理员信息
+                var admins = new Dictionary<string, Administrator>();
+                foreach (var id in adminIds)
+                {
+                    var admin = await _administratorRepository.GetByIdAsync(id);
+                    if (admin != null)
+                    {
+                        admins[id] = admin;
+                    }
+                }
+
+                // 获取所有相关的财务信息
+                var finances = new Dictionary<string, Finance>();
+                foreach (var id in financeIds)
+                {
+                    var finance = await _financeRepository.GetByIdAsync(id);
+                    if (finance != null)
+                    {
+                        finances[id] = finance;
+                    }
+                }
+
+                // 获取相关的仓库记录信息
+                var repositoryData = new Dictionary<string, Repository>();
+                foreach (var id in ingredientIds)
+                {
+                    var repo = await _repoRepository.FindByCompositeKeyAsync<Repository>(id, DateTime.Now); // 使用合适的日期
+                    if (repo != null)
+                    {
+                        repositoryData[id] = repo;
+                    }
+                }
+
+                // 构建 Restock 数据列表
+                var restockDataList = restocks.Select(r => new Restocks
+                {
+                    AdministratorId = r.AdministratorId,
+                    AdministratorName = admins.TryGetValue(r.AdministratorId, out var admin) ? admin.Name : "Unknown",
+                    Amount = r.Quantity,
+                    Date = finances.TryGetValue(r.FinanceId, out var finance) ? finance.FinanceDate : DateTime.Now,
+                    ExpirationTime = repositoryData.TryGetValue(r.IngredientId, out var repo) ? repo.ExpirationTime : DateTime.MinValue,
+                    FinanceId = r.FinanceId,
+                    IngredientId = r.IngredientId,
+                    IngredientName = ingredients.TryGetValue(r.IngredientId, out var ingredient) ? ingredient.IngredientName : "Unknown",
+                    Price = r.Price
+                }).ToList();
+
+                // 返回成功的响应
+                return new AllRestockResponseDto
+                {
+                    Success = true,
+                    Message = "Restock history retrieved successfully.",
+                    Restocks = restockDataList
+                };
+            }
+            catch (Exception ex)
+            {
+                return new AllRestockResponseDto
+                {
+                    Success = false,
+                    Message = $"Failed to retrieve restock history: {ex.Message}",
+                    Restocks = null
+                };
+            }
         }
+
+
+
 
         //生成财务ID
         private async Task<string> GenerateFinanceIdAsync()

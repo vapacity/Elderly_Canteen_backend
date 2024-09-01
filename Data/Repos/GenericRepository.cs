@@ -35,6 +35,7 @@ namespace Elderly_Canteen.Data.Repos
                 return await _dbSet.FindAsync(id);
             }
 
+
             public async Task AddAsync(T entity)
             {
                 await _dbSet.AddAsync(entity);
