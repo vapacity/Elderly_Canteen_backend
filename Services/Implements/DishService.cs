@@ -92,6 +92,8 @@ namespace Elderly_Canteen.Services.Implements
                     IngredientName = ingredient?.IngredientName // 通过 ingredient 对象获取 IngredientName
                 });
             }
+            var category = await _categoryRepository.GetByIdAsync(dto.CateId);
+
             //返回
             return new DishResponseDto
             {
@@ -101,6 +103,8 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     DishId = newDishId,
                     DishName = dto.Name,
+                    CateId = dto.CateId,
+                    Category = category.CateName,
                     Price = dto.Price,
                     Formula = formulaDtos // 将包含 ingredientName 的 FormulaDto 列表返回
                 }
@@ -193,7 +197,7 @@ namespace Elderly_Canteen.Services.Implements
                     IngredientName = ingredient?.IngredientName // 通过 ingredient 对象获取 IngredientName
                 });
             }
-
+            var category = await _categoryRepository.GetByIdAsync(dto.CateId);
             // 返回更新后的 DishResponseDto
             return new DishResponseDto
             {
@@ -203,6 +207,8 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     DishId = dto.DishId,
                     DishName = dto.Name,
+                    CateId = dto.CateId,
+                    Category = category.CateName,
                     Price = dto.Price,
                     Formula = formulaDtos
                 }
@@ -248,28 +254,33 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
-        public async Task<AllDishResponseDto> SearchDishesAsync(string name)
+        public async Task<AllDishResponseDto> SearchDishesAsync(string? name, string? category)
         {
             List<Dish> dishes;
 
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(category))
             {
-                // 如果 name 为空或仅包含空白字符，返回所有菜品
+                // 如果 name 和 category 都为空或仅包含空白字符，返回所有菜品
                 dishes = (await _dishRepository.GetAllAsync()).ToList();
             }
             else
             {
-                // 如果 name 不为空，根据 dishName、ingredientName 和 categoryName 进行模糊搜索
+                // 如果 name 和 category 不为空，两者都必须满足
                 dishes = (await _dishRepository.FindByConditionAsync(d =>
-                    d.DishName.Contains(name) ||
-                    d.Formulas.Any(f => f.Ingredient.IngredientName.Contains(name)) ||
-                    d.Cate.CateName.Contains(name)
+                    (string.IsNullOrWhiteSpace(name) || d.DishName.Contains(name)) &&
+                    (string.IsNullOrWhiteSpace(category) || d.Cate.CateName.Contains(category))
                 )).ToList();
             }
 
             foreach (var dish in dishes)
             {
+                // 手动加载与 Dish 关联的 Category
+                dish.Cate = await _categoryRepository.GetByIdAsync(dish.CateId);
+
+                // 手动加载与 Dish 关联的 Formulas
                 dish.Formulas = (await _formulaRepository.FindByConditionAsync(f => f.DishId == dish.DishId)).ToList();
+
+                // 手动加载每个 Formula 的 Ingredient
                 foreach (var formula in dish.Formulas)
                 {
                     formula.Ingredient = await _ingredientRepository.GetByIdAsync(formula.IngredientId);
@@ -277,29 +288,20 @@ namespace Elderly_Canteen.Services.Implements
             }
 
             // 构建返回的 AllDishResponseDto
-            var dishDtos = new List<DishDto>();
-
-            foreach (var dish in dishes)
+            var dishDtos = dishes.Select(dish => new DishDto
             {
-                // 查找与菜品关联的 Formula
-                var formulaDtos = dish.Formulas.Select(f => new FormulaDto
+                DishId = dish.DishId,
+                DishName = dish.DishName,
+                CateId = dish.Cate?.CateId, // 处理可能为 null 的情况
+                Category = dish.Cate?.CateName, // 处理可能为 null 的情况
+                Price = dish.Price,
+                Formula = dish.Formulas.Select(f => new FormulaDto
                 {
                     IngredientId = f.IngredientId,
                     Amount = f.Amount,
-                    IngredientName = f.Ingredient?.IngredientName
-                }).ToList();
-
-                // 构建 DishDto
-                var dishDto = new DishDto
-                {
-                    DishId = dish.DishId,
-                    DishName = dish.DishName,
-                    Price = dish.Price,
-                    Formula = formulaDtos
-                };
-
-                dishDtos.Add(dishDto);
-            }
+                    IngredientName = f.Ingredient?.IngredientName // 处理可能为 null 的情况
+                }).ToList()
+            }).ToList();
 
             // 返回 AllDishResponseDto
             return new AllDishResponseDto
@@ -309,9 +311,6 @@ namespace Elderly_Canteen.Services.Implements
                 Success = true
             };
         }
-
-
-
 
         private async Task<string> GenerateNewDishIdAsync()
         {
