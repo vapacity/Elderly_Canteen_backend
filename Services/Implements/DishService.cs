@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Data.Repos;
 using Elderly_Canteen.Services.Interfaces;
+using System.IO;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -309,6 +310,25 @@ namespace Elderly_Canteen.Services.Implements
                 Success = true
             };
         }
+
+        public async Task UploadImageAsync(string id, IFormFile image)
+        {
+            if (image == null || image.Length == 0)
+            {
+                throw new ArgumentException("接收图片失败");
+            }
+
+            using (var memoryStream = new MemoryStream())
+            {
+                await image.CopyToAsync(memoryStream);
+                var imageData = memoryStream.ToArray();
+
+                var dish = await _dishRepository.GetByIdAsync(id);
+                dish.Picture = imageData;
+                await _dishRepository.UpdateAsync(dish);
+            }
+        }
+
 
 
 

@@ -102,7 +102,25 @@ namespace Elderly_Canteen.Controllers
                 return Ok(response);
             }
         }
-   
-    
+
+        [HttpPost("uploadImage")]
+        public async Task<IActionResult> UploadImage(string id, IFormFile image)
+        {
+            try
+            {
+                await _dishService.UploadImageAsync(id,image);
+
+                return Ok(new { Success = true, Msg = "图片上传成功"});
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { Success = false, Msg = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Success = false, Msg = $"上传失败: {ex.Message}" });
+            }
+        }
+
     }
 }
