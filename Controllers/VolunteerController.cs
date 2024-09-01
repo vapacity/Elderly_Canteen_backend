@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Elderly_Canteen.Data.Dtos.Volunteer;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Elderly_Canteen.Filter;
+using Elderly_Canteen.Data.Entities;
 
 namespace Elderly_Canteen.Controllers
 {
@@ -41,5 +43,49 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest( new { success = false, msg = "申请失败" });
             }
         }
+
+        [HttpGet("getAllApply")]
+        [AuthorizeRole("admin")]
+        public async Task<IActionResult> getAllApply()
+        {
+            var response = await _volunteerService.GetAllApplyAsync();
+            return Ok(response);
+        }
+
+        [HttpGet("applyInfo/{id}")]
+        [AuthorizeRole("admin")]
+        public async Task<IActionResult> GetApplyInfo(string id)
+        {
+            var response = await _volunteerService.GetApplyInfoAsync(id);
+            return Ok(response);
+        }
+
+        [HttpPost("review/{id}")]
+        [AuthorizeRole("admin")]
+        [Authorize]
+        public async Task<IActionResult> ReviewApplication(VolunteerReviewApplicationDto application,string id)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (accountId == null)
+            {
+                return Unauthorized(new { success = false, msg = "用户认证失败" });
+            }
+
+            try
+            {
+                await _volunteerService.ReviewApplicationAsync(application, id, accountId);
+
+                return Ok(new { success = true, msg = "审核完成" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { success = false, msg = ex.Message });
+            }
+            catch
+            {
+                return BadRequest(new { success = false, msg = "审核失败" });
+            }
+        }
+
     }
 }
