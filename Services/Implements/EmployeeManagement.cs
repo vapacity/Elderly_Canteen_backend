@@ -50,9 +50,9 @@ public class EmployeeManagement : IEmployeeManagement
         {
             new EmployeeInfoResponseDto
             {
-                Success = false,
-                Msg = "数据库中无员工信息",
-                Response = new List<EmployeeResponseData>()
+                success = false,
+                msg = "数据库中无员工信息",
+                response = new List<EmployeeResponseData>()
             }
         };
         }
@@ -75,9 +75,9 @@ public class EmployeeManagement : IEmployeeManagement
         {
             new EmployeeInfoResponseDto
             {
-                Success = true,
-                Msg = "员工检索成功",
-                Response = employeeList
+                success = true,
+                msg = "员工检索成功",
+                response = employeeList
             }
     };
     }
@@ -91,17 +91,17 @@ public class EmployeeManagement : IEmployeeManagement
          
             return new EmployeeInfoResponseDto
             {
-                Success = false,
-                Msg = $"员工ID为 {id} 的员工不存在。",
-                Response = null
+                success = false,
+                msg = $"员工ID为 {id} 的员工不存在。",
+                response = null
             };
         }
 
         return new EmployeeInfoResponseDto
         {
-            Success = true,
-            Msg = "员工查找信息如下",
-            Response = new List<EmployeeResponseData>
+            success = true,
+            msg = "员工查找信息如下",
+            response = new List<EmployeeResponseData>
             {
                 new EmployeeResponseData
                 {
@@ -196,5 +196,6 @@ public class EmployeeManagement : IEmployeeManagement
         // 如果存在，执行删除操作
         await _employeeRepository.DeleteAsync(employeeToDelete.EmployeeId);
     }
+
 }
 
