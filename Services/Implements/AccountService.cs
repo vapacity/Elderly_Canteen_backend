@@ -20,6 +20,7 @@ using Elderly_Canteen.Data.Dtos.OTP;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.Extensions.Hosting;
+using System.Security.Cryptography;//哈希存储
 
 
 namespace Elderly_Canteen.Services.Implements
@@ -129,17 +130,6 @@ namespace Elderly_Canteen.Services.Implements
                 response.Msg = "用户不存在！";
                 return response;
             }
-            // 检查是否需要更新密码
-            if (!string.IsNullOrEmpty(request.NewPassword))
-            {
-                var passwordChanged = await ChangePassword(request.NewPassword, account.Accountid);
-                if (!passwordChanged)
-                {
-                    response.Success = false;
-                    response.Msg = "密码更新失败";
-                    return response;
-                }
-            }
             //生成 Token 并返回用户信息
             var token = GenerateJwtToken(account);
             response.Success = true;
@@ -189,7 +179,9 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
-            if (account.Password != loginRequest.password)
+            PasswordHasher hasher = new PasswordHasher();
+            string inputHashedPassword = hasher.HashPasswordUsingSHA256(loginRequest.password);
+            if (inputHashedPassword != account.Password)
             {
                 return new LoginResponseDto
                 {
@@ -254,11 +246,15 @@ namespace Elderly_Canteen.Services.Implements
                 avatarPath = await SaveAvatarAsync(avatar);
             }
 
+            //处理哈希密码
+            PasswordHasher hasher = new PasswordHasher();
+            string hashedPassword = hasher.HashPasswordUsingSHA256(registerRequestDto.password);
+
             var newAccount = new Account
             {
                 Accountid = await GenerateAccountIdAsync(),
                 Accountname = registerRequestDto.userName,
-                Password = registerRequestDto.password,
+                Password = hashedPassword,
                 Phonenum = registerRequestDto.phone,
                 Identity = "user",
                 Gender = registerRequestDto.gender,
@@ -519,7 +515,9 @@ namespace Elderly_Canteen.Services.Implements
             }
 
             // 比较旧密码
-            return oldPassword == account.Password;
+            PasswordHasher hasher = new PasswordHasher();
+            string inputHashedPassword = hasher.HashPasswordUsingSHA256(oldPassword);
+            return inputHashedPassword == account.Password;
         }
 
         // 修改密码逻辑
@@ -530,7 +528,9 @@ namespace Elderly_Canteen.Services.Implements
             {
                 return false;
             }
-            account.Password = password;
+            PasswordHasher hasher = new PasswordHasher();
+            string hashedPassword = hasher.HashPasswordUsingSHA256(password);
+            account.Password = hashedPassword;
             await _accountRepository.UpdateAsync(account);
             return true;
         }
@@ -637,7 +637,44 @@ namespace Elderly_Canteen.Services.Implements
             return Path.Combine("uploads", uniqueFileName).Replace("\\", "/");
         }
 
+        public class PasswordHasher
+        {
+            // 使用 MD5 哈希密码
+            public string HashPasswordUsingMD5(string password)
+            {
+                using (MD5 md5 = MD5.Create())
+                {
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(password);
+                    byte[] hashBytes = md5.ComputeHash(inputBytes);
 
-        
+                    // 转换为16进制字符串
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < hashBytes.Length; i++)
+                    {
+                        sb.Append(hashBytes[i].ToString("X2"));
+                    }
+                    return sb.ToString(); // 生成的哈希字符串为32个字符
+                }
+            }
+
+            // 使用 SHA256 并截断前20个字符
+            public string HashPasswordUsingSHA256(string password)
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(password);
+                    byte[] hashBytes = sha256.ComputeHash(inputBytes);
+
+                    // 转换为16进制字符串
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < hashBytes.Length; i++)
+                    {
+                        sb.Append(hashBytes[i].ToString("X2"));
+                    }
+                    return sb.ToString().Substring(0, 20); // 截断为20个字符
+                }
+            }
+        }
+
     }
 }
