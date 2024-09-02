@@ -122,6 +122,8 @@ namespace Elderly_Canteen.Controllers
             }
             return Ok(result);
         }
+
+        //(url参数安全性较低)
         [Authorize]
         [HttpPost("changePassword")]
         public async Task<IActionResult> ChangePassword(string pswd)
@@ -162,6 +164,99 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest(response);
             }
             return Ok(response);
+        }
+
+        [HttpPost("verifiationCodeWithoutUserCheck")]
+        public async Task<IActionResult> VerifyOTPWithoutUserCheck([FromBody] VerifyOTPRequestDto request)
+        {
+            var response = await _accountService.VerifyOTPWithoutUserCheckAsync(request);
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPost("alterPassword")]
+        public async Task<IActionResult> AlterPassword([FromBody] PasswordRequestDto request)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // 首先验证原密码是否正确
+            bool isOldPasswordValid = await _accountService.VerifyPassword(request.OldPassword, accountId);
+            if (!isOldPasswordValid)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    msg = "原密码不正确",
+                });
+            }
+
+            // 如果原密码正确，尝试修改密码
+            bool result = await _accountService.ChangePassword(request.NewPassword, accountId);
+            if (!result)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    msg = "修改失败",
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                msg = "修改成功",
+            });
+        }
+
+        [Authorize]
+        [HttpPost("changePhone")]
+        public async Task<IActionResult> ChangePhone([FromBody] PhoneRequestDto request)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _accountService.ChangePhone(request, accountId);
+            if (result.success == false)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpDelete("deleteUser")]
+        public async Task<IActionResult> DeleteUser()
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (accountId == null)
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    msg = "用户未认证",
+                });
+            }
+
+            var result = await _accountService.DeleteAccountAsync(accountId);
+
+            if (result)
+            {
+                // 成功删除用户账号后，可以清理用户会话或Cookie等
+                return Ok(new
+                {
+                    success = true,
+                    msg = "账号已成功注销",
+                });
+            }
+
+            return BadRequest(new
+            {
+                success = false,
+                msg = "注销账号时发生错误",
+            });
         }
     }
 }

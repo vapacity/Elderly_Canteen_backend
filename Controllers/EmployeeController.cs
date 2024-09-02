@@ -1,8 +1,13 @@
 ﻿using Elderly_Canteen.Data.Dtos.EmployeeInfo;
+using Elderly_Canteen.Data.Dtos.PersonInfo;
+using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
+
 
 namespace Elderly_Canteen.Controllers
 {
@@ -17,7 +22,8 @@ namespace Elderly_Canteen.Controllers
             _employeeManagement = employeeManagement;
         }
 
-        [HttpGet("search")]
+
+        [HttpGet("getInfo")]
         public async Task<ActionResult<IEnumerable<EmployeeInfoResponseDto>>> GetAllEmployees()
         {
             var employees = await _employeeManagement.GetAllEmployeesAsync();
@@ -28,7 +34,7 @@ namespace Elderly_Canteen.Controllers
         public async Task<ActionResult<EmployeeInfoResponseDto>> GetEmployeeById(string id)
         {
             var employee = await _employeeManagement.GetEmployeeByIdAsync(id);
-            if (employee == null || !employee.success)
+            if (employee == null || !employee.Success)
             {
                 return NotFound(employee);
             }
@@ -62,12 +68,6 @@ namespace Elderly_Canteen.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEmployee(string id, EmployeeInfoRequestDto employeeDto)
         {
-            // 验证传入的 ID 是否与 DTO 中的 EmployeeId 一致
-            if (id != employeeDto.EmployeeId)
-            {
-                return BadRequest(new { success = false, msg = "请求路径中的 ID 与提交的数据不匹配。" });
-            }
-
             try
             {
                 // 调用服务层的 UpdateEmployeeAsync 方法更新员工信息
@@ -105,5 +105,34 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPost("payWage")]
+        public async Task<IActionResult> AlterPersonInfo(List<string> employeeIds)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new { msg = "无效的Token" });
+            }
+
+            try
+            {
+                await _employeeManagement.PaySalayByIdAsync(accountId, employeeIds);
+                return Ok(new { success = true, msg = "工资发放成功!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { success = false, msg = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, msg = $"内部服务器错误: {ex.Message}" });
+            }
+
+
+        }
+    }
+
     }
 }
+

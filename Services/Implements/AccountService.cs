@@ -20,6 +20,7 @@ using Elderly_Canteen.Data.Dtos.OTP;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.Extensions.Hosting;
+using System.Security.Cryptography;//哈希存储
 
 
 namespace Elderly_Canteen.Services.Implements
@@ -27,13 +28,23 @@ namespace Elderly_Canteen.Services.Implements
     public class AccountService : IAccountService
     {
         private readonly IGenericRepository<Account> _accountRepository;
+        //这是为了注销用户的时候不把财务信息删除掉，因此把该账户的财务记录的id改为“DELETED”，其他的应该级联删除
+        private readonly IGenericRepository<Finance> _financeRepository;
+        private readonly IGenericRepository<Donation> _donationRepository;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _memoryCache;
         private readonly IWebHostEnvironment _environment;
 
-        public AccountService(IGenericRepository<Account> accountRepository, IConfiguration configuration, IMemoryCache memoryCache,IWebHostEnvironment environment)
+        public AccountService(IGenericRepository<Account> accountRepository,
+                            IGenericRepository<Finance> financeRepository,
+                            IGenericRepository<Donation> donationRepository,
+                            IConfiguration configuration,
+                            IMemoryCache memoryCache,
+                            IWebHostEnvironment environment)
         {
             _accountRepository = accountRepository;
+            _financeRepository = financeRepository;
+            _donationRepository = donationRepository;
             _configuration = configuration;
             _memoryCache = memoryCache;
             _environment = environment;
@@ -119,17 +130,6 @@ namespace Elderly_Canteen.Services.Implements
                 response.Msg = "用户不存在！";
                 return response;
             }
-            // 检查是否需要更新密码
-            if (!string.IsNullOrEmpty(request.NewPassword))
-            {
-                var passwordChanged = await ChangePassword(request.NewPassword, account.Accountid);
-                if (!passwordChanged)
-                {
-                    response.Success = false;
-                    response.Msg = "密码更新失败";
-                    return response;
-                }
-            }
             //生成 Token 并返回用户信息
             var token = GenerateJwtToken(account);
             response.Success = true;
@@ -145,7 +145,24 @@ namespace Elderly_Canteen.Services.Implements
             _memoryCache.Remove(request.PhoneNum);
             return response;
         }
-       
+        //验证码验证
+        public async Task<VerifyOTPResponseDto<OTPLoginResponseDto>> VerifyOTPWithoutUserCheckAsync(VerifyOTPRequestDto request)
+        {
+            var response = new VerifyOTPResponseDto<OTPLoginResponseDto>();
+            // 从缓存中获取验证码
+            var savedCode = await GetOTPAsync(request.PhoneNum);
+            if (savedCode == null || savedCode != request.Code)
+            {
+                response.Success = false;
+                response.Msg = "验证码无效或已过期";
+                return response;
+            }
+            response.Success = true;
+            response.Msg = "验证成功";
+            // 验证通过，删除缓存中的验证码
+            _memoryCache.Remove(request.PhoneNum);
+            return response;
+        }
 
         //登录逻辑
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest)
@@ -162,7 +179,9 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
-            if (account.Password != loginRequest.password)
+            PasswordHasher hasher = new PasswordHasher();
+            string inputHashedPassword = hasher.HashPasswordUsingSHA256(loginRequest.password);
+            if (inputHashedPassword != account.Password)
             {
                 return new LoginResponseDto
                 {
@@ -189,6 +208,23 @@ namespace Elderly_Canteen.Services.Implements
         //注册逻辑
         public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto, IFormFile avatar)
         {
+            // 验证验证码
+            var verifyOtpResult = await VerifyOTPWithoutUserCheckAsync(new VerifyOTPRequestDto
+            {
+                PhoneNum = registerRequestDto.phone,
+                Code = registerRequestDto.verificationCode 
+            });
+
+            if (!verifyOtpResult.Success)
+            {
+                return new RegisterResponseDto
+                {
+                    registerSuccess = false,
+                    msg = verifyOtpResult.Msg,
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                };
+            }
+
             // 检查用户是否存在
             var existingAccount = await _accountRepository.GetAll()
                 .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.phone);
@@ -210,11 +246,15 @@ namespace Elderly_Canteen.Services.Implements
                 avatarPath = await SaveAvatarAsync(avatar);
             }
 
+            //处理哈希密码
+            PasswordHasher hasher = new PasswordHasher();
+            string hashedPassword = hasher.HashPasswordUsingSHA256(registerRequestDto.password);
+
             var newAccount = new Account
             {
                 Accountid = await GenerateAccountIdAsync(),
                 Accountname = registerRequestDto.userName,
-                Password = registerRequestDto.password,
+                Password = hashedPassword,
                 Phonenum = registerRequestDto.phone,
                 Identity = "user",
                 Gender = registerRequestDto.gender,
@@ -431,6 +471,55 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
+        // 改绑手机
+        public async Task<PhoneResponseDto> ChangePhone(PhoneRequestDto request, string accountId)
+        {
+            // 检查数据库中是否已存在相同的手机号
+            var existingAccount = await _accountRepository.GetAll()
+                .FirstOrDefaultAsync(a => a.Phonenum == request.NewPhoneNum && a.Accountid != accountId);
+
+            if (existingAccount != null)
+            {
+                return new PhoneResponseDto
+                {
+                    success = false,
+                    msg = "手机号已被占用",
+                };
+            }
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return new PhoneResponseDto
+                {
+                    success = false,
+                    msg = "用户验证失败",
+                };
+            }
+            account.Phonenum = request.NewPhoneNum;
+            await _accountRepository.UpdateAsync(account);
+            return new PhoneResponseDto
+            {
+                success = true,
+                msg = "改绑成功",
+            };
+        }
+
+        // 验证用户输入的旧密码是否正确
+        public async Task<bool> VerifyPassword(string oldPassword, string accountId)
+        {
+            // 从数据库获取用户存储的密码
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return false;
+            }
+
+            // 比较旧密码
+            PasswordHasher hasher = new PasswordHasher();
+            string inputHashedPassword = hasher.HashPasswordUsingSHA256(oldPassword);
+            return inputHashedPassword == account.Password;
+        }
+
         // 修改密码逻辑
         public async Task<bool> ChangePassword(string password,string accountId)
         {
@@ -439,10 +528,47 @@ namespace Elderly_Canteen.Services.Implements
             {
                 return false;
             }
-            account.Password = password;
+            PasswordHasher hasher = new PasswordHasher();
+            string hashedPassword = hasher.HashPasswordUsingSHA256(password);
+            account.Password = hashedPassword;
             await _accountRepository.UpdateAsync(account);
             return true;
         }
+
+        //注销账户逻辑
+        public async Task<bool> DeleteAccountAsync(string accountId)
+        {
+            try
+            {
+                var account = await _accountRepository.GetByIdAsync(accountId);
+
+                if (account == null)
+                {
+                    return false;
+                }
+                // 如果注销账户在财务记录中，更新财务记录，将 accountId 设置为特殊值
+                await _financeRepository.UpdateAsync(
+                    f => f.AccountId == accountId,
+                    f => f.AccountId = "DELETED");
+                await _donationRepository.UpdateAsync(
+                    f => f.AccountId == accountId,
+                    f => f.AccountId = "DELETED");
+
+                await _accountRepository.DeleteAsync(accountId);
+
+                return true;
+            }
+            catch
+            {
+                // 这里可以添加日志记录以便调试
+                return false;
+            }
+        }
+
+
+
+
+
 
         //以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用
         private string GenerateJwtToken(Account account)
@@ -456,7 +582,7 @@ namespace Elderly_Canteen.Services.Implements
                     new Claim(ClaimTypes.NameIdentifier, account.Accountid),
                     new Claim(ClaimTypes.Role, account.Identity),
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
+                Expires = DateTime.UtcNow.AddHours(24),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -511,7 +637,44 @@ namespace Elderly_Canteen.Services.Implements
             return Path.Combine("uploads", uniqueFileName).Replace("\\", "/");
         }
 
+        public class PasswordHasher
+        {
+            // 使用 MD5 哈希密码
+            public string HashPasswordUsingMD5(string password)
+            {
+                using (MD5 md5 = MD5.Create())
+                {
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(password);
+                    byte[] hashBytes = md5.ComputeHash(inputBytes);
 
+                    // 转换为16进制字符串
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < hashBytes.Length; i++)
+                    {
+                        sb.Append(hashBytes[i].ToString("X2"));
+                    }
+                    return sb.ToString(); // 生成的哈希字符串为32个字符
+                }
+            }
+
+            // 使用 SHA256 并截断前20个字符
+            public string HashPasswordUsingSHA256(string password)
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] inputBytes = Encoding.UTF8.GetBytes(password);
+                    byte[] hashBytes = sha256.ComputeHash(inputBytes);
+
+                    // 转换为16进制字符串
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < hashBytes.Length; i++)
+                    {
+                        sb.Append(hashBytes[i].ToString("X2"));
+                    }
+                    return sb.ToString().Substring(0, 20); // 截断为20个字符
+                }
+            }
+        }
 
     }
 }

@@ -7,13 +7,15 @@ public partial class Dish
 {
     public string DishId { get; set; } = null!;
 
-    public byte[] Picture { get; set; } = null!;
-
     public string DishName { get; set; } = null!;
 
     public decimal Price { get; set; }
 
     public string CateId { get; set; } = null!;
+
+    public byte[]? Picture { get; set; }
+
+    public string? ImageUrl {  get; set; } 
 
     public virtual Category Cate { get; set; } = null!;
 

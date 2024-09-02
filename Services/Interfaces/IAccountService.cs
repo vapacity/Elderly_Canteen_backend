@@ -16,8 +16,12 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<PersonInfoResponseDto> AlterPersonInfoAsync(PersonInfoRequestDto personInfo, string accountId, IFormFile avatar);
         Task<List<AccountDto>> GetAllAccountsAsync();
         Task<AuthenticationResponseDto> NameAuthentication(AuthenticationRequestDto input, string accountId);
+        Task<bool> VerifyPassword(string oldPassword, string accountId);
         Task<bool> ChangePassword(string password, string accountId);
         Task<VerifyOTPResponseDto<OTPLoginResponseDto>> VerifyLoginOTPAsync(VerifyOTPRequestDto request);
+        Task<VerifyOTPResponseDto<OTPLoginResponseDto>> VerifyOTPWithoutUserCheckAsync(VerifyOTPRequestDto request);
         Task<GetOTPResponseDto> SendOTPAsync(GetOTPRequestDto request);
+        Task<PhoneResponseDto> ChangePhone(PhoneRequestDto request, string accountId);
+        Task<bool> DeleteAccountAsync(string accountId);
     }
 }

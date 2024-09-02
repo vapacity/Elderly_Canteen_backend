@@ -17,7 +17,7 @@ public partial class Finance
 
     public string AccountId { get; set; } = null!;
 
-    public string? AdministratorId { get; set; } // 将AdministratorId改为可空类型
+    public string? AdministratorId { get; set; }
 
     public byte[]? Proof { get; set; }
 
@@ -25,7 +25,7 @@ public partial class Finance
 
     public virtual Account Account { get; set; } = null!;
 
-    public virtual Administrator? Administrator { get; set; } // 将Administrator改为可空类型
+    public virtual Administrator? Administrator { get; set; }
 
     public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();
 

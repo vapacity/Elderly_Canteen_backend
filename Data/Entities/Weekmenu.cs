@@ -15,5 +15,7 @@ public partial class Weekmenu
 
     public decimal DisPrice { get; set; }
 
+    public string Day { get; set; } = null!;
+
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 }

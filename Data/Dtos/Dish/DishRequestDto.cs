@@ -7,22 +7,19 @@
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
+    /// <summary>
+    /// Request
+    /// </summary>
     public partial class DishRequestDto
     {
         /// <summary>
         /// 分组
         /// </summary>
-        [JsonProperty("category")]
-        public string Category { get; set; }
+        [JsonProperty("cateId")]
+        public string CateId { get; set; }
 
-        /// <summary>
-        /// ID 编号
-        /// </summary>
-        [JsonProperty("id")]
-        public long Id { get; set; }
-
-        [JsonProperty("image")]
-        public string Image { get; set; }
+        [JsonProperty("formula")]
+        public List<FormulaDto> Formula { get; set; }
 
         /// <summary>
         /// 名称
@@ -31,9 +28,10 @@
         public string Name { get; set; }
 
         [JsonProperty("price")]
-        public string Price { get; set; }
+        public decimal Price { get; set; }
 
-        [JsonProperty("recipe")]
-        public string Recipe { get; set; }
+        [JsonProperty("dishId")]
+        public string? DishId { get; set; }
     }
+
 }

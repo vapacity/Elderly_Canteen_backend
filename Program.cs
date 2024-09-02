@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
+using Elderly_Canteen;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +42,15 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ModelContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 Console.WriteLine("Database Connection String: " + builder.Configuration.GetConnectionString("DefaultConnection"));
-
+// 加载 OssConfig
+var ossConfig = builder.Configuration.GetSection("OssConfig");
+// 注册OSSService
+builder.Services.AddSingleton<IOssService>(sp => new OSSService(
+    ossConfig["Endpoint"],
+    ossConfig["AccessKeyId"],
+    ossConfig["AccessKeySecret"],
+    ossConfig["BucketName"]
+));
 // 注册通用仓储服务
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
@@ -49,8 +59,15 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IDonateService, DonateService>();
 builder.Services.AddScoped<IEmployeeManagement, EmployeeManagement>();
+builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<IVolunteerService, VolunteerService>();
 builder.Services.AddMemoryCache();//配置内存缓存
 builder.Services.AddScoped<IHomePageService, HomePageService>();
+builder.Services.AddScoped<IIngreService, IngreService>();
+builder.Services.AddScoped<IRepoService, RepoService>();
+builder.Services.AddScoped<ICateService, CateService>();
+builder.Services.AddScoped<IDishService, DishService>();
+builder.Services.AddScoped<IWeekMenuService, WeekMenuService>();
 
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
