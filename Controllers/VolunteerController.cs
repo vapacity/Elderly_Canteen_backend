@@ -87,5 +87,23 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("getVolInfo")]
+        public async Task<IActionResult> GetVolInfo()
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new { msg = "无效的Token" });
+            }
+
+            // 调用Service函数获取个人信息
+            var result = await _volunteerService.GetVolInfoAsync(accountId);
+            if (result.success == false)
+            {
+                return NotFound(result);
+            }
+            return Ok(result);
+        }
     }
 }
