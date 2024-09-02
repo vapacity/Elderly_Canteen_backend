@@ -142,6 +142,12 @@ public partial class ModelContext : DbContext
             entity.Property(e => e.Verifycode)
                 .HasPrecision(6)
                 .HasColumnName("VERIFYCODE");
+            entity.Property(e => e.Money)
+                .HasColumnType("decimal(10, 2)") 
+                .HasDefaultValue(100.00m)         
+                .IsRequired(false);               
+
+
         });
 
         modelBuilder.Entity<Administrator>(entity =>

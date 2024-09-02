@@ -4,7 +4,7 @@ using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-
+using Elderly_Canteen.Data.Dtos.Cart;
 namespace Elderly_Canteen.Controllers
 {
     [Authorize]
@@ -19,12 +19,10 @@ namespace Elderly_Canteen.Controllers
             _cartService = cartService;
         }
 
-        private string accountId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         [HttpPost("createCart")]
         public async Task<IActionResult> CreateCart()
         {
-            
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var cartResponse = await _cartService.CreateCartAsync(accountId);
             if (cartResponse == null)
             {
@@ -40,6 +38,7 @@ namespace Elderly_Canteen.Controllers
         [HttpDelete("deleteCart")]
         public async Task<IActionResult> DeleteCart()
         {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var cartResponse = await _cartService.DeleteCartAsync(accountId);
             if (cartResponse == null)
             {
@@ -52,21 +51,64 @@ namespace Elderly_Canteen.Controllers
             return Ok(cartResponse);
         }
 
-        [HttpPost("updateCart")]
-        public async Task<IActionResult> UpdateCart()
+        [HttpPost("updateCartItem")]
+        public async Task<IActionResult> UpdateCart(CartItemRequestDto dto)
         {
-            return null;
+            // 获取当前用户的 AccountId
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(accountId))
+            {
+                // 如果 accountId 为空，返回未经授权的响应
+                return Unauthorized(new { Success = false, Message = "用户未授权" });
+            }
+
+            // 调用服务层的方法来更新购物车项
+            var response = await _cartService.UpdateCartItemAsync(dto, accountId);
+
+            // 根据响应结果返回相应的 IActionResult
+            if (response.Success)
+            {
+                return Ok(new { Success = true, Message = response.Message });
+            }
+            else
+            {
+                return BadRequest(new { Success = false, Message = response.Message });
+            }
         }
+
 
         [HttpDelete("deleteCartItem")]
-        public async Task<IActionResult> DeleteCartItem()
+        public async Task<IActionResult> DeleteCartItem([FromBody] DeleteRequestDto dto)
         {
-            return null;
+            // 获取当前用户的 AccountId
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new { Success = false, Message = "用户未授权" });
+            }
+
+            // 调用服务层的方法来删除购物车项
+            var response = await _cartService.DeleteCartItem(dto, accountId);
+
+            // 根据服务层返回的结果返回相应的 IActionResult
+            if (response.Success)
+            {
+                return Ok(new { Success = true, Message = response.Message });
+            }
+            else
+            {
+                return BadRequest(new { Success = false, Message = response.Message });
+            }
         }
 
+
         [HttpPost("ensureCart")]
-        public async Task<IActionResult> EnsureCart()
+        public async Task<IActionResult> EnsureCart([FromBody] string CART_ID)
         {
+            string cartId = CART_ID;
+
             return null;
         }
     }

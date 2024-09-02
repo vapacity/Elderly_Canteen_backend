@@ -138,6 +138,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+// 使用 CORS 中间件，允许所有来源
+app.UseCors("AllowAllOrigins");
 
 // 配置请求管道
 if (app.Environment.IsDevelopment())
@@ -156,8 +158,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-// 使用 CORS 中间件，允许所有来源
-app.UseCors("AllowAllOrigins");
+
 
 // 使用静态文件中间件
 // 这里将自定义的 uploads 目录配置为静态文件目录
