@@ -32,6 +32,13 @@ namespace Elderly_Canteen.Services.Interfaces
         /// </summary>
         /// <param name="id">员工ID</param>
         Task DeleteEmployeeAsync(string id);
+        /// <summary>
+        /// 发工资
+        /// </summary>
+        /// <param name="administratorId"></param>
+        /// <param name="employeeIds"></param>
+        /// <returns></returns>
+        Task PaySalayByIdAsync(string administratorId, List<string> employeeIds);
     }
 
 }
