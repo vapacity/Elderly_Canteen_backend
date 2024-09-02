@@ -67,7 +67,7 @@ builder.Services.AddScoped<IRepoService, RepoService>();
 builder.Services.AddScoped<ICateService, CateService>();
 builder.Services.AddScoped<IDishService, DishService>();
 builder.Services.AddScoped<IWeekMenuService, WeekMenuService>();
-
+builder.Services.AddScoped<IOrderService, OrderService>();
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
