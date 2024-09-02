@@ -9,11 +9,13 @@ namespace Elderly_Canteen.Services.Implements
     {
         private readonly IGenericRepository<Cart> _cartRepository;
         private readonly IGenericRepository<CartItem> _cartItemRepository;
+        private readonly IGenericRepository<OrderInf> _orderInfoRepository;
 
-        public CartService(IGenericRepository<Cart> cartRepository, IGenericRepository<CartItem> cartItemRepository)
+        public CartService(IGenericRepository<Cart> cartRepository, IGenericRepository<CartItem> cartItemRepository, IGenericRepository<OrderInf> orderInfoRepository)
         {
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
+            _orderInfoRepository = orderInfoRepository;
         }
 
         private string GenerateCartId()
@@ -41,22 +43,33 @@ namespace Elderly_Canteen.Services.Implements
         {
             try
             {
-                var existedCart = (await _cartRepository.FindByConditionAsync(cart => cart.AccountId == accountId)).FirstOrDefault();
-                if (existedCart != null)
+                var existedCart = await _cartRepository.FindByConditionAsync(cart => cart.AccountId == accountId);
+                //查看所有用户已存在的购物车
+                foreach(var excart in existedCart)
                 {
-                    // 返回 CartResponseDto
-                    return new CartResponseDto
+                    //获得购物车中尚未出现在orderInfo中的，避免获得已经收纳为订单的购物车
+                    var result = await _orderInfoRepository.FindByConditionAsync(o => o.CartId == excart.CartId);
+                    if(result.Any())
                     {
-                        success = true,
-                        msg = "Cart already existed!",
-                        response = new CartResponseDto.CartResponse
+                        continue;
+                    }
+                    else
+                    {
+                        //返回已经存在但是不在orderinfo中的购物车
+                        return new CartResponseDto
                         {
-                            cartId = existedCart.CartId,
-                            createTime = existedCart.CreatedTime,
-                            updateTime = existedCart.UpdatedTime
-                        }
-                    };
-                }
+                            success =true,
+                            msg = "Cart already existed!",
+                            response = new CartResponseDto.CartResponse
+                            {
+                                cartId = excart.CartId,
+                                createTime = excart.CreatedTime,
+                                updateTime = excart.UpdatedTime,
+                            }
+                            
+                        };
+                    }
+                }              
                 // 生成 CartId
                 var cartId = GenerateCartId();
 
@@ -103,31 +116,57 @@ namespace Elderly_Canteen.Services.Implements
         {
             try
             {
-                var existedCart = (await _cartRepository.FindByConditionAsync(cart => cart.AccountId == accountId)).FirstOrDefault();
-                if (existedCart != null)
-                {
-                    await _cartRepository.DeleteAsync(existedCart);
+                // 查找与 accountId 关联的所有购物车
+                var existedCarts = await _cartRepository.FindByConditionAsync(cart => cart.AccountId == accountId);
 
-                    // 返回 CartResponseDto
+                if (existedCarts.Any())
+                {
+                    // 遍历所有关联的购物车
+                    foreach (var cart in existedCarts)
+                    {
+                        // 检查购物车是否存在于 orderInfo 中
+                        var orderInfo = await _orderInfoRepository.FindByConditionAsync(o => o.CartId == cart.CartId);
+
+                        if (!orderInfo.Any())
+                        {
+                            // 如果购物车不在 orderInfo 中，则删除该购物车
+                            await _cartRepository.DeleteAsync(cart);
+
+                            // 返回成功消息
+                            return new CartResponseDto
+                            {
+                                success = true,
+                                msg = "成功删除购物车",
+                                response = new CartResponseDto.CartResponse
+                                {
+                                    cartId = cart.CartId,
+                                    createTime = cart.CreatedTime,
+                                    updateTime = cart.UpdatedTime
+                                }
+                            };
+                        }
+                    }
+
+                    // 如果所有的购物车都关联了订单，则返回错误消息
                     return new CartResponseDto
                     {
-                        success = true,
-                        msg = "Cart Deleted Successfully!",
-                        response = new CartResponseDto.CartResponse
-                        {
-                            cartId = existedCart.CartId,
-                            createTime = existedCart.CreatedTime,
-                            updateTime = existedCart.UpdatedTime
-                        }
+                        success = false,
+                        msg = "所有购物车都已经关联到了订单中"
                     };
                 }
                 else
                 {
-                    return null;
+                    // 如果找不到任何购物车，返回错误消息
+                    return new CartResponseDto
+                    {
+                        success = false,
+                        msg = "没有找到与用户关联的购物车"
+                    };
                 }
             }
             catch (Exception ex)
             {
+                // 捕获异常并返回错误消息
                 return new CartResponseDto
                 {
                     success = false,
@@ -135,5 +174,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
         }
+
+
     }
 }
