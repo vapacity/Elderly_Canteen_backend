@@ -411,22 +411,25 @@ namespace Elderly_Canteen.Services.Implements
 
             foreach (var account in accounts)
             {
-                var response = new AccountDto
+                if (account.Accountid != "DELETED")
                 {
-                    accountId = account.Accountid,
-                    accountName = account.Accountname,
-                    phoneNum = account.Phonenum,
-                    identity = account.Identity,
-                    portrait = account.Portrait,
-                    gender = account.Gender,
-                    password = account.Password,
-                    address = account.Address,
-                    name = account.Name,
-                    Idcard = account.Idcard
-                    
-                };
+                    var response = new AccountDto
+                    {
+                        accountId = account.Accountid,
+                        accountName = account.Accountname,
+                        phoneNum = account.Phonenum,
+                        identity = account.Identity,
+                        portrait = account.Portrait,
+                        gender = account.Gender,
+                        password = account.Password,
+                        address = account.Address,
+                        name = account.Name,
+                        Idcard = account.Idcard
 
-                responseList.Add(response);
+                    };
+
+                    responseList.Add(response);
+                }
             }
 
             return responseList;
