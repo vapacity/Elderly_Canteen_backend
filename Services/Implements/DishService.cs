@@ -71,6 +71,7 @@ namespace Elderly_Canteen.Services.Implements
                 DishName = dto.Name,
                 Price = dto.Price,
                 CateId = dto.CateId,
+                ImageUrl = _ossService.GetDefaultImageUrl()
             };
             await _dishRepository.AddAsync(newDish);
 

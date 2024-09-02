@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Data\Dtos\Home\**" />
+    <Content Remove="Data\Dtos\Home\**" />
+    <EmbeddedResource Remove="Data\Dtos\Home\**" />
+    <None Remove="Data\Dtos\Home\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Aliyun.OSS.SDK.NetCore" Version="2.14.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
@@ -23,10 +30,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.7.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.7.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Data\Dtos\Home\" />
   </ItemGroup>
 
 </Project>
