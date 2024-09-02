@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Elderly_Canteen.Data.Dtos.Account;
 using Elderly_Canteen.Data.Dtos.Donate;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -73,7 +74,7 @@ namespace Elderly_Canteen.Services.Implements
             await _applicationRepository.AddAsync(newApplication);
         }
 
-        //获得所有未审核申请（就是申请表）逻辑
+        //获得所有未审核申请逻辑
         public async Task<VolunteerReviewListDto> GetAllApplyAsync()
         {
             var applications = await _applicationRepository.GetAllAsync();
@@ -308,7 +309,93 @@ namespace Elderly_Canteen.Services.Implements
 
         }
 
+        //获取所有志愿者
+        public async Task<VolunteerListDto> GetAllVolunteerAsync()
+        {
+            var volunteers = await _volunteerRepository.GetAllAsync();
 
+            if (volunteers == null || !volunteers.Any())
+            {
+                return new VolunteerListDto
+                {
+                    success = false,
+                    msg = "暂无志愿者",
+                    response = null
+                };
+            }
+
+            var responseList = new List<VolunteerListDto.ResponseData>();
+
+            foreach (var volunteer in volunteers)
+            {
+                var account = await _accountRepository.GetByIdAsync(volunteer.AccountId);
+
+                var iscore = 0.0;
+                if (volunteer.Score != null)
+                {
+                    iscore = (double)volunteer.Score;
+                }
+
+                var response = new VolunteerListDto.ResponseData
+                {
+                    name = account.Name,
+                    accountId = volunteer.AccountId,
+                    idCard = account.Idcard,
+                    phoneNum = account.Phonenum,
+                    score = iscore,
+                    deliverCount = await _delivervRepository.CountAsync(e => e.VolunteerId == volunteer.AccountId)
+                };
+
+                responseList.Add(response);
+                
+            }
+
+            return new VolunteerListDto
+            {
+                success = true,
+                msg = "获取所有志愿者成功",
+                response = responseList
+            };
+        }
+
+        public async Task DelVolunteerAsync(string accountId,string adminId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                throw new InvalidOperationException("用户不存在");
+            }
+            var vol = await _volunteerRepository.GetByIdAsync(accountId);
+            if (vol == null)
+            {
+                throw new InvalidOperationException("用户还不是志愿者，不能删除");
+            }
+            //从志愿者表删除
+            await _volunteerRepository.DeleteByConditionAsync(v=>v.AccountId == accountId);
+
+            //身份改变
+            account.Identity = "user";
+            await _accountRepository.UpdateAsync(account);
+
+            //审核表改操作人信息、原因、时间和状态
+            var applyList = await _applicationRepository.FindByConditionAsync(e => e.AccountId == accountId);
+            if (applyList != null && applyList.Any())
+            {
+                foreach (var apply in applyList)
+                {
+                    var rev = await _reviewRepository.GetByIdAsync(apply.ApplicationId);
+                    if (rev.Status=="通过") // 如果没有找到对应的审核记录
+                    {
+                        rev.AdministratorId=adminId;
+                        rev.Reason = $"ID为 {adminId} 的管理员从后台删除";
+                        rev.ReviewDate = DateTime.Now;
+                        rev.Status = "不通过";
+                        await _reviewRepository.UpdateAsync(rev);
+                        break;
+                    }
+                }
+            }
+        }
 
 
 
