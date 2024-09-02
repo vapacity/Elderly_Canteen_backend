@@ -17,12 +17,18 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<VolReview> _reviewRepository;
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IGenericRepository<Volunteer> _volunteerRepository;
-        public VolunteerService(IGenericRepository<Account> accountRepository, IGenericRepository<VolApplication> applicationRepository, IGenericRepository<Volunteer> volunteerRepository, IGenericRepository<VolReview> reviewRepository)
+        private readonly IGenericRepository<DeliverV> _delivervRepository;
+        public VolunteerService(IGenericRepository<Account> accountRepository, 
+            IGenericRepository<VolApplication> applicationRepository, 
+            IGenericRepository<Volunteer> volunteerRepository, 
+            IGenericRepository<VolReview> reviewRepository, 
+            IGenericRepository<DeliverV> delivervRepository)
         {
             _applicationRepository = applicationRepository;
             _accountRepository = accountRepository;
             _volunteerRepository = volunteerRepository;
             _reviewRepository = reviewRepository;
+            _delivervRepository = delivervRepository;
         }
 
         //志愿者申请
@@ -78,11 +84,11 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     success = false,
                     msg = "暂无申请表",
-                    responce = null
+                    response = null
                 };
             }
 
-            var responseList = new List<VolunteerReviewListDto.ResponceData>();
+            var responseList = new List<VolunteerReviewListDto.ResponseData>();
 
             foreach (var application in applications)
             {
@@ -91,7 +97,7 @@ namespace Elderly_Canteen.Services.Implements
 
                 if (!reviewExists.Any()) // 如果审核表中没有对应的记录
                 {
-                    var response = new VolunteerReviewListDto.ResponceData
+                    var response = new VolunteerReviewListDto.ResponseData
                     {
                         applicationId = application.ApplicationId,
                         accountId = application.AccountId,
@@ -108,7 +114,7 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     success = false,
                     msg = "所有申请均已审核",
-                    responce = null
+                    response = null
                 };
             }
 
@@ -116,7 +122,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 success = true,
                 msg = "成功",
-                responce = responseList
+                response = responseList
             };
         }
 
@@ -131,7 +137,7 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     success = false,
                     msg = "该用户暂无申请",
-                    responce = null
+                    response = null
                 };
             }
 
@@ -143,7 +149,7 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     success = false,
                     msg = "用户不存在",
-                    responce = null
+                    response = null
                 };
             }
             if (account.Idcard == null)
@@ -152,7 +158,7 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     success = false,
                     msg = "用户未实名认证",
-                    responce = null
+                    response = null
                 };
             }
             var vol = await _volunteerRepository.GetByIdAsync(accountId);
@@ -162,11 +168,11 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     success = false,
                     msg = "用户已是志愿者",
-                    responce = null
+                    response = null
                 };
             }
           
-            var res = new VolunteerReviewInfoDto.ResponceData
+            var res = new VolunteerReviewInfoDto.ResponseData
             {
                 name = account.Name,
                 gender = account.Gender,
@@ -183,7 +189,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 success = true,
                 msg = "获取用户申请成功",
-                responce = res
+                response = res
             };
 
             return applicationDto;
@@ -192,6 +198,11 @@ namespace Elderly_Canteen.Services.Implements
         // 审核逻辑
         public async Task ReviewApplicationAsync(VolunteerReviewApplicationDto application, string id , string accountId)
         {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null) {
+                throw new InvalidOperationException($"ID为 {id} 的用户不存在");
+            }
+
             var apply = await _applicationRepository.GetByIdAsync(id);
             if (apply == null)
             {
@@ -225,10 +236,77 @@ namespace Elderly_Canteen.Services.Implements
                     Score = null
                 };
                 await _volunteerRepository.AddAsync(volunteer);
+
+                account.Identity = "volunteer";
+                await _accountRepository.UpdateAsync(account);
             }
         }
 
+        public async Task<VolunteerResponseDto> GetVolInfoAsync(string accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return new VolunteerResponseDto
+                {
+                    success = false,
+                    msg = "用户不存在",
+                    response = null
+                };
+            }
 
+            var vol = await _volunteerRepository.GetByIdAsync(accountId);
+            if (vol == null)
+            {
+                return new VolunteerResponseDto
+                {
+                    success = false,
+                    msg = "用户不是志愿者",
+                    response = null
+                };
+            }
+
+            var num = await _delivervRepository.CountAsync(e => e.VolunteerId == accountId);
+            
+            var applyList = await _applicationRepository.FindByConditionAsync(e => e.AccountId == accountId);
+            if (applyList == null || !applyList.Any())
+            {
+                return new VolunteerResponseDto
+                {
+                    success = false,
+                    msg = "用户暂无申请表",
+                    response = null
+                };
+            }
+            foreach (var application in applyList)
+            {
+                // 查找审核表中是否有对应的审核记录
+                var review = await _reviewRepository.GetByIdAsync(application.ApplicationId);
+
+                if (review.Status=="通过") // 如果审核表中没有对应的记录
+                {
+                    return new VolunteerResponseDto
+                    {
+                        success = true,
+                        msg = "获取成功",
+                        response = new VolunteerResponseDto.ResponseData
+                        {
+                            accountId = account.Accountid,
+                            name = account.Name,
+                            deliverCount = num,
+                            time = review.ReviewDate.ToString("yyyy-MM-dd")
+                        }
+                    };
+                }
+            }
+            return new VolunteerResponseDto
+            {
+                success = false,
+                msg = "用户志愿者申请未被通过",
+                response = null
+            };
+
+        }
 
 
 
