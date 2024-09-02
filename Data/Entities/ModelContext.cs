@@ -143,9 +143,10 @@ public partial class ModelContext : DbContext
                 .HasPrecision(6)
                 .HasColumnName("VERIFYCODE");
             entity.Property(e => e.Money)
-                .HasColumnType("decimal(10, 2)") 
-                .HasDefaultValue(100.00m)         
-                .IsRequired(false);               
+                .HasColumnType("decimal(10, 2)")  // 设置列的类型为 decimal，精度为 10，总位数为10位，其中小数点后2位
+                .HasDefaultValue(100.00m)        
+                .HasColumnName("MONEY")
+                .IsRequired(true);               
 
 
         });

@@ -62,6 +62,22 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
+        public string GetDefaultProtrateUrl()
+        {
+            try
+            {
+                // 指向default-dish.jpg的签名URL，设置为一年过期
+                var defaultImageKey = "default-portrait.png";
+                var imageUrl = _ossClient.GeneratePresignedUri(_bucketName, defaultImageKey, DateTime.Now.AddYears(1)).ToString();
+                return imageUrl;
+            }
+            catch (Exception ex)
+            {
+                // 处理生成URL过程中的异常
+                throw new Exception("获取默认图片URL失败", ex);
+            }
+        }
+
 
     }
 

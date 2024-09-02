@@ -4,5 +4,6 @@
     {
         Task<string> UploadFileAsync(IFormFile file, string fileName);
         string GetDefaultImageUrl();
+        string GetDefaultProtrateUrl();
     }
 }
