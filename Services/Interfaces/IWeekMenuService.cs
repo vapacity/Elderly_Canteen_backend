@@ -6,6 +6,9 @@ namespace Elderly_Canteen.Services.Interfaces
     {
         Task<WmResponseDto> AddWM(WmRequestDto request);
         Task<WmResponseDto> RemoveWM(WmRequestDto request);
-        Task<WmResponseDto> GetWM(WmRequestDto request);
+        Task<AllWeekMenuResponseDto> GetWeekMenuByDateAsync(DateTime date);
+        Task<DiscountResponseDto> UploadDiscount(DiscountRequestDto dto);
+        Task<BatchResponseDto> BatchDiscount(BatchRequestDto dto);
+        Task<AllDiscountResponseDto> GetAllDiscount(DateTime date);
     }
 }

@@ -70,6 +70,26 @@ namespace Elderly_Canteen.Data.Repos
                 return await _dbSet.Where(expression).ToListAsync();
             }
 
+            public async Task<bool> DeleteByConditionAsync(Expression<Func<T, bool>> expression)
+            {
+                // 查找符合条件的实体
+                var entities = await FindByConditionAsync(expression);
+
+                if (!entities.Any())
+                {
+                    return false; // 没有找到符合条件的实体
+                }
+
+                // 删除所有符合条件的实体
+                foreach (var entity in entities)
+                {
+                    _dbSet.Remove(entity);
+                }
+
+                await _context.SaveChangesAsync();
+                return true; // 成功删除
+            }
+
             // 新增方法以支持Include导航属性
             public async Task<List<T>> GetWithIncludesAsync(
                 params Expression<Func<T, object>>[] includeProperties)

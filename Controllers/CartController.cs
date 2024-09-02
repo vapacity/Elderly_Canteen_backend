@@ -7,6 +7,7 @@ using System.Security.Claims;
 
 namespace Elderly_Canteen.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class CartController:ControllerBase
@@ -20,7 +21,6 @@ namespace Elderly_Canteen.Controllers
 
         private string accountId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        [Authorize]
         [HttpPost("createCart")]
         public async Task<IActionResult> CreateCart()
         {
@@ -36,7 +36,7 @@ namespace Elderly_Canteen.Controllers
             }
             return Ok(cartResponse);
         }
-        [Authorize]
+
         [HttpDelete("deleteCart")]
         public async Task<IActionResult> DeleteCart()
         {
@@ -50,6 +50,24 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest(cartResponse);
             }
             return Ok(cartResponse);
+        }
+
+        [HttpPost("updateCart")]
+        public async Task<IActionResult> UpdateCart()
+        {
+            return null;
+        }
+
+        [HttpDelete("deleteCartItem")]
+        public async Task<IActionResult> DeleteCartItem()
+        {
+            return null;
+        }
+
+        [HttpPost("ensureCart")]
+        public async Task<IActionResult> EnsureCart()
+        {
+            return null;
         }
     }
 }

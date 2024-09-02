@@ -306,7 +306,7 @@ namespace Elderly_Canteen.Services.Implements
                     Amount = f.Amount,
                     IngredientName = f.Ingredient?.IngredientName // 处理可能为 null 的情况
                 }).ToList(),
-                Image = dish.Picture != null ? Convert.ToBase64String(dish.Picture) : string.Empty // 处理可能为 null 的情况
+                Image = dish.ImageUrl// 处理可能为 null 的情况
             }).ToList();
 
             // 返回 AllDishResponseDto

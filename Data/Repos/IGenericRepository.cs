@@ -16,5 +16,6 @@ namespace Elderly_Canteen.Data.Repos
         Task<List<T>> GetWithIncludesAsync(params Expression<Func<T, object>>[] includeProperties);
         Task<T> FindByCompositeKeyAsync<T>(params object[] keyValues) where T : class;
         Task DeleteByCompositeKeyAsync<T>(params object[] keyValues) where T : class;
+        Task<bool> DeleteByConditionAsync(Expression<Func<T, bool>> expression);
     }
 }

@@ -10,21 +10,15 @@
     /// <summary>
     /// Request
     /// </summary>
-    public partial class WmRequestDto
+    public partial class BatchRequestDto
     {
-        /// <summary>
-        /// 当天日期
-        /// </summary>
         [JsonProperty("date")]
         public DateTime Date { get; set; }
 
-        /// <summary>
-        /// ID 编号
-        /// </summary>
-        [JsonProperty("dishId")]
-        public string DishId { get; set; }
+        [JsonProperty("discount")]
+        public decimal Discount { get; set; }
 
-        [JsonProperty("day")]
-        public string Day { get; set; }
+        [JsonProperty("dishIds")]
+        public List<string> DishIds { get; set; }
     }
 }

@@ -1178,6 +1178,9 @@ public partial class ModelContext : DbContext
             entity.Property(e => e.Stock)
                 .HasPrecision(10)
                 .HasColumnName("STOCK");
+            entity.Property(e => e.Day)
+                .HasMaxLength(10)
+                .HasColumnName("DAY");
         });
         modelBuilder.HasSequence("EMPLOYEEID_SEQ");
 

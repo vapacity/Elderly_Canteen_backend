@@ -10,21 +10,18 @@
     /// <summary>
     /// Request
     /// </summary>
-    public partial class WmRequestDto
+    public partial class DiscountResponseDto
     {
-        /// <summary>
-        /// 当天日期
-        /// </summary>
-        [JsonProperty("date")]
-        public DateTime Date { get; set; }
-
-        /// <summary>
-        /// ID 编号
-        /// </summary>
         [JsonProperty("dishId")]
         public string DishId { get; set; }
 
-        [JsonProperty("day")]
-        public string Day { get; set; }
+        [JsonProperty("message")]
+        public string Message { get; set; }
+
+        [JsonProperty("success")]
+        public bool Success { get; set; }
+
+        [JsonProperty("updatedPrice")]
+        public decimal UpdatedPrice { get; set; }
     }
 }
