@@ -1,12 +1,16 @@
-﻿using Elderly_Canteen.Data.Dtos.EmployeeInfo;
+﻿using Elderly_Canteen.Data.Dtos.Account;
+using Elderly_Canteen.Data.Dtos.Dish;
+using Elderly_Canteen.Data.Dtos.EmployeeInfo;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
 using Elderly_Canteen.Data.Dtos.Users;
+using Elderly_Canteen.Data.Dtos.Volunteer;
 using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Data.Repos;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -123,6 +127,53 @@ namespace Elderly_Canteen.Services.Implements
 
             await _usersRepository.DeleteAsync(id);
         }
+        
+        // 有条件搜索
+        public async Task<UserSearchDto> SerchUserAsync(string? accountName, string? identity)
+        {
+            List<Account> users;
+
+            if (string.IsNullOrWhiteSpace(accountName) && string.IsNullOrWhiteSpace(identity))
+            {
+                // 如果 accountName 和 identity 都为空或仅包含空白字符，返回所有用户
+                users = (await _usersRepository.GetAllAsync()).ToList();
+            }
+            else
+            {
+                // 如果 accountName 和 identity 不为空，两者都必须满足
+                users = (await _usersRepository.FindByConditionAsync(u =>
+                    (string.IsNullOrWhiteSpace(accountName) || u.Accountname.Contains(accountName)) &&
+                    (string.IsNullOrWhiteSpace(identity) || u.Identity.Contains(identity))
+                )).ToList();
+            }
+
+            // 构建返回的 UserSearchDto
+            var userDtos = users.Select(user => new SearchData
+            {
+                accountName = user.Accountname,
+                accountId = user.Accountid,
+                phoneNum = user.Phonenum,
+                identity = user.Identity,
+                gender = user.Gender
+            }).ToList();
+
+            // 返回 UserSearchDto
+            return new UserSearchDto
+            {
+                Response = userDtos,
+                Msg = "success",
+                Success = true
+            };
+        }
+
+
+
+
+
+
+
+
+
 
         public async Task<string> CreatePsdAsync(int length, int maxLength)
         {
@@ -150,5 +201,6 @@ namespace Elderly_Canteen.Services.Implements
             // 打乱字符顺序
             return new string(password.ToString().OrderBy(x => random.Next()).ToArray());
         }
+
     }
 }

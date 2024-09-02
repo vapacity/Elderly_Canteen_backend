@@ -238,7 +238,8 @@ namespace Elderly_Canteen.Services.Implements
                 };
                 await _volunteerRepository.AddAsync(volunteer);
 
-                account.Identity = "volunteer";
+                var accountToChange= await _accountRepository.GetByIdAsync(apply.AccountId);
+                accountToChange.Identity = "volunteer";
                 await _accountRepository.UpdateAsync(account);
             }
         }

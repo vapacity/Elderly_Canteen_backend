@@ -21,4 +21,27 @@
         public string Address { get; set; }
     }
 
+    public class UserSearchDto
+    {
+        public bool Success { get; set; }
+
+        public string Msg { get; set; }
+
+        public List<SearchData> Response { get; set; }
+    }
+
+    public class SearchData
+    {
+
+        public string accountName { get; set; }
+
+        public string accountId { get; set; }
+
+        public string phoneNum { get; set; }
+
+        public string identity { get; set; }
+
+        public string gender { get; set; }
+    }
+
 }

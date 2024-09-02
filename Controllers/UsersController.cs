@@ -91,6 +91,17 @@ namespace Elderly_Canteen.Controllers
                 password=psd
             });
         }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<UserSearchDto>> SerchUser([FromQuery] string? accountName,[FromQuery] string? identity)
+        {
+            var res= await _usersService.SerchUserAsync(accountName, identity);
+            if (res == null || !res.Success)
+            {
+                return NotFound(res);
+            }
+            return Ok(res);
+        }
     }
 }
 
