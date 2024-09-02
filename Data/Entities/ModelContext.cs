@@ -144,8 +144,9 @@ public partial class ModelContext : DbContext
                 .HasColumnName("VERIFYCODE");
             entity.Property(e => e.Money)
                 .HasColumnType("decimal(10, 2)") 
-                .HasDefaultValue(100.00m)         
-                .IsRequired(false);               
+                .HasDefaultValue(100.00m)
+                .HasColumnName("MONEY")
+                .IsRequired(true);               
 
 
         });
