@@ -5,17 +5,17 @@
         /// <summary>
         /// 请求是否成功
         /// </summary>
-        public bool Success { get; set; }
+        public bool success { get; set; }
 
         /// <summary>
         /// 提示信息
         /// </summary>
-        public string Msg { get; set; }
+        public string msg { get; set; }
 
         /// <summary>
         /// 员工信息列表
         /// </summary>
-        public List<EmployeeResponseData> Response { get; set; }
+        public List<EmployeeResponseData> response { get; set; }
     }
 
     public class EmployeeResponseData
