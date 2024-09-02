@@ -9,7 +9,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 
 
-
 namespace Elderly_Canteen.Controllers
 {
     [ApiController]
@@ -22,6 +21,7 @@ namespace Elderly_Canteen.Controllers
         {
             _employeeManagement = employeeManagement;
         }
+
 
         [HttpGet("getInfo")]
         public async Task<ActionResult<IEnumerable<EmployeeInfoResponseDto>>> GetAllEmployees()
@@ -105,7 +105,6 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
-
         [Authorize]
         [HttpPost("payWage")]
         public async Task<IActionResult> AlterPersonInfo(List<string> employeeIds)
@@ -134,5 +133,6 @@ namespace Elderly_Canteen.Controllers
         }
     }
 
+    }
 }
 

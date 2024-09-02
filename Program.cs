@@ -62,6 +62,7 @@ builder.Services.AddScoped<IEmployeeManagement, EmployeeManagement>();
 builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<IVolunteerService, VolunteerService>();
 builder.Services.AddMemoryCache();//配置内存缓存
+builder.Services.AddScoped<IHomePageService, HomePageService>();
 builder.Services.AddScoped<IIngreService, IngreService>();
 builder.Services.AddScoped<IRepoService, RepoService>();
 builder.Services.AddScoped<ICateService, CateService>();
