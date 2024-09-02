@@ -31,6 +31,7 @@ namespace Elderly_Canteen.Services.Implements
         //这是为了注销用户的时候不把财务信息删除掉，因此把该账户的财务记录的id改为“DELETED”，其他的应该级联删除
         private readonly IGenericRepository<Finance> _financeRepository;
         private readonly IGenericRepository<Donation> _donationRepository;
+        private readonly IGenericRepository<Senior> _seniorRepository;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _memoryCache;
         private readonly IWebHostEnvironment _environment;
@@ -38,6 +39,7 @@ namespace Elderly_Canteen.Services.Implements
         public AccountService(IGenericRepository<Account> accountRepository,
                             IGenericRepository<Finance> financeRepository,
                             IGenericRepository<Donation> donationRepository,
+                            IGenericRepository<Senior> seniorRepository,
                             IConfiguration configuration,
                             IMemoryCache memoryCache,
                             IWebHostEnvironment environment)
@@ -45,6 +47,7 @@ namespace Elderly_Canteen.Services.Implements
             _accountRepository = accountRepository;
             _financeRepository = financeRepository;
             _donationRepository = donationRepository;
+            _seniorRepository = seniorRepository;
             _configuration = configuration;
             _memoryCache = memoryCache;
             _environment = environment;
@@ -446,6 +449,14 @@ namespace Elderly_Canteen.Services.Implements
             }
             if (account.Idcard != null)
             {
+                if (account.Idcard.Length != 18)
+                {
+                    return new AuthenticationResponseDto
+                    {
+                        success = false,
+                        msg = "身份证号格式不正确"
+                    };  // 如果身份证号码为空或长度不是18，则返回错误信息
+                }
                 return new AuthenticationResponseDto
                 {
                     success = false,
@@ -463,12 +474,56 @@ namespace Elderly_Canteen.Services.Implements
             }
             account.Name = input.name;
             account.Idcard = input.idCard;
+            DateTime date = ExtractBirthDateFromID(account.Idcard);
+            account.Birthdate = date;
             await _accountRepository.UpdateAsync(account);
-            return new AuthenticationResponseDto
+            if (CalculateAge(date) >= 60)
+            {
+                var senior = new Senior
+                {
+                    AccountId = account.Accountid,
+                    FamilyNum = account.Phonenum,
+                    Subsidy = 50
+                };
+               
+                await _seniorRepository.AddAsync(senior);
+                return new AuthenticationResponseDto
+                {
+                    success = true,
+                    msg = "老人身份认证成功"
+                };
+            }
+        
+                return new AuthenticationResponseDto
             {
                 success = true,
-                msg = "认证成功"
+                msg = "普通用户认证成功"
             };
+        }
+        // 从身份证号码中提取出生日期
+        public static DateTime ExtractBirthDateFromID(string idNumber)
+        {
+
+            string year = idNumber.Substring(6, 4); // 提取年份
+            string month = idNumber.Substring(10, 2); // 提取月份
+            string day = idNumber.Substring(12, 2); // 提取日期
+
+            // 尝试将提取的部分转换为DateTime
+            DateTime.TryParseExact(year + month + day, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime birthDate);
+
+            return birthDate;
+          
+        }
+        //计算年龄
+        private static int CalculateAge(DateTime birthDate)
+        {
+            DateTime today = DateTime.Today;
+            int age = today.Year - birthDate.Year;
+            if (today.Month < birthDate.Month || (today.Month == birthDate.Month && today.Day < birthDate.Day))
+            {
+                age--;
+            }
+            return age;
         }
 
         // 改绑手机

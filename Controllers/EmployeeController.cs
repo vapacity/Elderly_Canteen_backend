@@ -34,7 +34,7 @@ namespace Elderly_Canteen.Controllers
         public async Task<ActionResult<EmployeeInfoResponseDto>> GetEmployeeById(string id)
         {
             var employee = await _employeeManagement.GetEmployeeByIdAsync(id);
-            if (employee == null || !employee.Success)
+            if (employee == null || !employee.success)
             {
                 return NotFound(employee);
             }
@@ -131,8 +131,6 @@ namespace Elderly_Canteen.Controllers
 
 
         }
-    }
-
     }
 }
 
