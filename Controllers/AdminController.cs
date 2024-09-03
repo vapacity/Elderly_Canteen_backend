@@ -1,5 +1,5 @@
 ﻿using Elderly_Canteen.Data.Dtos.PersonInfo;
-using Elderly_Canteen.Data.Dtos.Users;
+using Elderly_Canteen.Data.Dtos.Admin;
 using Elderly_Canteen.Data.Entities;
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
@@ -10,33 +10,33 @@ namespace Elderly_Canteen.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UsersController : Controller
+    public class AdminController : Controller
     {
-        private readonly IUsersService _usersService;
+        private readonly IAdminService _adminService;
         private readonly IAccountService _accountService;
 
-        public UsersController(IUsersService usersService, IAccountService accountService)
+        public AdminController(IAdminService adminService, IAccountService accountService)
         {
-            _usersService = usersService;
+            _adminService = adminService;
             _accountService = accountService;
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UsersResponseDto>> GetUserById(string id)
+        public async Task<ActionResult<AdminResponseDto>> GetAdminById(string id)
         {
-            var user = await _usersService.GetUserByIdAsync(id);
-            if (user == null || !user.Success)
+            var admin = await _adminService.GetAdminByIdAsync(id);
+            if (admin == null || !admin.Success)
             {
-                return NotFound(user);
+                return NotFound(admin);
             }
-            return Ok(user);
+            return Ok(admin);
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(string id, UsersRequestDto user)
+        public async Task<IActionResult> UpdateAdmin(string id, AdminRequestDto admin)
         {
             try
             {
-                await _usersService.UpdateUserAsync(id, user);
+                await _adminService.UpdateAdminAsync(id, admin);
 
                 return Ok(new { success = true, msg = "修改成功" });
             }
@@ -52,12 +52,30 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteUser(string id)
+        [HttpPost("add")]
+        public async Task<ActionResult> AddAdmin(AdminRegisterDto admin)
         {
             try
             {
-                await _usersService.DeleteUserAsync(id);
+                await _adminService.AddAdminAsync(admin);
+                return Ok(new { success = true, msg = "创建成功!初始密码为1" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { success = false, msg = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, msg = $"内部服务器错误: {ex.Message}" });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteAdmin(string id)
+        {
+            try
+            {
+                await _adminService.DeleteAdminAsync(id);
                 return Ok(new { success = true, msg = "删除成功!" });
             }
             catch (InvalidOperationException ex)
@@ -70,32 +88,10 @@ namespace Elderly_Canteen.Controllers
             }
         }
 
-        [HttpPost("resetpsd/{id}")]
-        public async Task<ActionResult> ResetUserPsd(string id)
-        {
-            var psd = await _usersService.CreatePsdAsync();
-            bool result = await _accountService.ChangePassword(psd, id);
-            if (!result)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    msg = "重置密码失败"
-                });
-            }
-
-            return Ok(new
-            {
-                success = true,
-                msg = "重置密码成功",
-                password=psd
-            });
-        }
-
         [HttpGet("search")]
-        public async Task<ActionResult<UserSearchDto>> SerchUser([FromQuery] string? accountName,[FromQuery] string? identity)
+        public async Task<ActionResult<AdminSearchDto>> SearchAdmin([FromQuery] string? name, [FromQuery] string? identity)
         {
-            var res= await _usersService.SerchUserAsync(accountName, identity);
+            var res = await _adminService.SerchAdminAsync(name, identity);
             if (res == null || !res.Success)
             {
                 return NotFound(res);

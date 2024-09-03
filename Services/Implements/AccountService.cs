@@ -35,6 +35,7 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _memoryCache;
         private readonly IWebHostEnvironment _environment;
+        private readonly IOssService _ossService;
 
         public AccountService(IGenericRepository<Account> accountRepository,
                             IGenericRepository<Finance> financeRepository,
@@ -42,7 +43,8 @@ namespace Elderly_Canteen.Services.Implements
                             IGenericRepository<Senior> seniorRepository,
                             IConfiguration configuration,
                             IMemoryCache memoryCache,
-                            IWebHostEnvironment environment)
+                            IWebHostEnvironment environment,
+                            IOssService ossService)
         {
             _accountRepository = accountRepository;
             _financeRepository = financeRepository;
@@ -51,6 +53,7 @@ namespace Elderly_Canteen.Services.Implements
             _configuration = configuration;
             _memoryCache = memoryCache;
             _environment = environment;
+            _ossService = ossService;
         }
 
         //发送验证码逻辑
@@ -241,14 +244,6 @@ namespace Elderly_Canteen.Services.Implements
                     timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 };
             }
-
-            // 处理头像文件并生成路径
-            string avatarPath = null;
-            if (avatar != null)
-            {
-                avatarPath = await SaveAvatarAsync(avatar);
-            }
-
             //处理哈希密码
             PasswordHasher hasher = new PasswordHasher();
             string hashedPassword = hasher.HashPasswordUsingSHA256(registerRequestDto.password);
@@ -261,9 +256,24 @@ namespace Elderly_Canteen.Services.Implements
                 Phonenum = registerRequestDto.phone,
                 Identity = "user",
                 Gender = registerRequestDto.gender,
-                Birthdate = DateTime.TryParse(registerRequestDto.birthDate, out var birthdate) ? birthdate : (DateTime?)null,
-                Portrait = avatarPath // 保存头像路径
+                Birthdate = DateTime.TryParse(registerRequestDto.birthDate, out var birthdate) ? birthdate : (DateTime?)null
             };
+
+            // 处理头像文件并生成路径
+            string avatarPath = null;
+            if (avatar != null)
+            {
+                // 上传图片到 OSS
+                var fileName = $"{newAccount.Accountid}-portrait.jpg";
+                var imageUrl = await _ossService.UploadFileAsync(avatar, fileName);
+                // 更新数据库中的图片 URL
+                newAccount.Portrait = imageUrl;  // 假设你在 Dish 实体中有一个 ImageUrl 属性
+            }
+            else
+            {
+                newAccount.Portrait = _ossService.GetDefaultImageUrl();
+            }
+            
 
             await _accountRepository.AddAsync(newAccount);
             var token = GenerateJwtToken(newAccount);
@@ -306,7 +316,7 @@ namespace Elderly_Canteen.Services.Implements
                     accountName = account.Accountname,
                     phoneNum = account.Phonenum,
                     identity = account.Identity,
-                    portrait = account.Portrait != null ? $"/{account.Portrait}" : null, // 返回相对路径
+                    portrait = account.Portrait,
                     gender = account.Gender,
                     birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
@@ -355,8 +365,10 @@ namespace Elderly_Canteen.Services.Implements
             if (avatar != null)
             {
                 // 处理头像文件并生成路径
-                var avatarPath = await SaveAvatarAsync(avatar);
-                account.Portrait = avatarPath;
+                // 上传图片到 OSS
+                var fileName = $"{accountId}-portrait.jpg";
+                var imageUrl = await _ossService.UploadFileAsync(avatar, fileName);
+                account.Portrait = imageUrl;
             }
 
             if (!string.IsNullOrEmpty(personInfo.gender))
@@ -398,7 +410,8 @@ namespace Elderly_Canteen.Services.Implements
                     gender = account.Gender,
                     birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
-                    name = account.Name
+                    name = account.Name,
+                    money = account.Money
                 }
             };
         }
@@ -414,22 +427,25 @@ namespace Elderly_Canteen.Services.Implements
 
             foreach (var account in accounts)
             {
-                var response = new AccountDto
+                if (account.Accountid != "DELETED")
                 {
-                    accountId = account.Accountid,
-                    accountName = account.Accountname,
-                    phoneNum = account.Phonenum,
-                    identity = account.Identity,
-                    portrait = account.Portrait,
-                    gender = account.Gender,
-                    password = account.Password,
-                    address = account.Address,
-                    name = account.Name,
-                    Idcard = account.Idcard
-                    
-                };
+                    var response = new AccountDto
+                    {
+                        accountId = account.Accountid,
+                        accountName = account.Accountname,
+                        phoneNum = account.Phonenum,
+                        identity = account.Identity,
+                        portrait = account.Portrait,
+                        gender = account.Gender,
+                        password = account.Password,
+                        address = account.Address,
+                        name = account.Name,
+                        Idcard = account.Idcard,
+                        money = account.Money,
+                    };
 
-                responseList.Add(response);
+                    responseList.Add(response);
+                }
             }
 
             return responseList;

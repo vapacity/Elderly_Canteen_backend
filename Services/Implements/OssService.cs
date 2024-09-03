@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Threading.Tasks;
 using Elderly_Canteen.Services.Interfaces;
+using Elderly_Canteen.Data.Entities;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -43,6 +45,40 @@ namespace Elderly_Canteen.Services.Implements
                 throw new Exception("图片上传到OSS失败", ex);
             }
         }
+
+        public string GetDefaultImageUrl()
+        {
+            try
+            {
+                // 指向default-dish.jpg的签名URL，设置为一年过期
+                var defaultImageKey = "default-dish.jpg";
+                var imageUrl = _ossClient.GeneratePresignedUri(_bucketName, defaultImageKey, DateTime.Now.AddYears(1)).ToString();
+                return imageUrl;
+            }
+            catch (Exception ex)
+            {
+                // 处理生成URL过程中的异常
+                throw new Exception("获取默认图片URL失败", ex);
+            }
+        }
+
+        public string GetDefaultProtrateUrl()
+        {
+            try
+            {
+                // 指向default-dish.jpg的签名URL，设置为一年过期
+                var defaultImageKey = "default-portrait.png";
+                var imageUrl = _ossClient.GeneratePresignedUri(_bucketName, defaultImageKey, DateTime.Now.AddYears(1)).ToString();
+                return imageUrl;
+            }
+            catch (Exception ex)
+            {
+                // 处理生成URL过程中的异常
+                throw new Exception("获取默认图片URL失败", ex);
+            }
+        }
+
+
     }
 
 

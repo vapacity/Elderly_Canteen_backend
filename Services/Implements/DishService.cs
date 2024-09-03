@@ -71,6 +71,7 @@ namespace Elderly_Canteen.Services.Implements
                 DishName = dto.Name,
                 Price = dto.Price,
                 CateId = dto.CateId,
+                ImageUrl = _ossService.GetDefaultImageUrl()
             };
             await _dishRepository.AddAsync(newDish);
 
@@ -318,7 +319,7 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
-        public async Task<bool> UploadImageAsync(string id, IFormFile image)
+        public async Task<string> UploadImageAsync(string id, IFormFile image)
         {
             if (image == null || image.Length == 0)
             {
@@ -339,10 +340,10 @@ namespace Elderly_Canteen.Services.Implements
             // 更新数据库中的图片 URL
             dish.ImageUrl = imageUrl;  // 假设你在 Dish 实体中有一个 ImageUrl 属性
             await _dishRepository.UpdateAsync(dish);
-            return true;
+            return imageUrl;
         }
 
-            private async Task<string> GenerateNewDishIdAsync()
+        private async Task<string> GenerateNewDishIdAsync()
         {
             // 获取数据库中当前 ingredient 表的最大 ID
             var maxId = await _dishRepository.GetAll()

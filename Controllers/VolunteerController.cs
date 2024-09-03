@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Elderly_Canteen.Filter;
 using Elderly_Canteen.Data.Entities;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Elderly_Canteen.Controllers
 {
@@ -84,6 +85,59 @@ namespace Elderly_Canteen.Controllers
             catch
             {
                 return BadRequest(new { success = false, msg = "审核失败" });
+            }
+        }
+
+        [Authorize]
+        [HttpGet("getVolInfo")]
+        public async Task<IActionResult> GetVolInfo()
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new { success = false, msg = "无效的Token" });
+            }
+
+            // 调用Service函数获取个人信息
+            var result = await _volunteerService.GetVolInfoAsync(accountId);
+            if (result.success == false)
+            {
+                return NotFound(result);
+            }
+            return Ok(result);
+        }
+
+        [HttpGet("getAll")]
+        [AuthorizeRole("admin")]
+        public async Task<IActionResult> getAllVolunteer()
+        {
+            var response = await _volunteerService.GetAllVolunteerAsync();
+            return Ok(response);
+        }
+
+        [HttpDelete("del/{id}")]
+        [AuthorizeRole("admin")]
+        [Authorize]
+        public async Task<IActionResult> delVolunteer(string id)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (accountId == null)
+            {
+                return Unauthorized(new { success = false, msg = "用户认证失败" });
+            }
+            try
+            {
+                await _volunteerService.DelVolunteerAsync(id,accountId);
+
+                return Ok(new { success = true, msg = "删除成功" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { success = false, msg = ex.Message });
+            }
+            catch
+            {
+                return BadRequest(new { success = false, msg = "删除失败" });
             }
         }
 

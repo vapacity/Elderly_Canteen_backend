@@ -1,15 +1,15 @@
-﻿namespace Elderly_Canteen.Data.Dtos.Users
+﻿namespace Elderly_Canteen.Data.Dtos.Admin
 {
-    public class UsersResponseDto
+    public class AdminResponseDto
     {
         public bool Success { get; set; }
 
         public string Msg { get; set; }
 
-        public List<UsersResponseData> Response { get; set; }
+        public List<AdminResponseData> Response { get; set; }
     }
 
-    public class UsersResponseData
+    public class AdminResponseData
     {
 
         public string Name { get; set; }
@@ -19,29 +19,30 @@
         public string BirthDate { get; set; }
 
         public string Address { get; set; }
+
+        public string Email { get; set; }
     }
 
-    public class UserSearchDto
+    public class AdminSearchDto
     {
         public bool Success { get; set; }
 
         public string Msg { get; set; }
 
-        public List<SearchData> Response { get; set; }
+        public List<AdminSearchData> Response { get; set; }
     }
 
-    public class SearchData
+    public class AdminSearchData
     {
 
-        public string accountName { get; set; }
+        public string name { get; set; }
 
         public string accountId { get; set; }
 
         public string phoneNum { get; set; }
 
-        public string identity { get; set; }
+        public string position { get; set; }
 
         public string gender { get; set; }
     }
-
 }

@@ -12,5 +12,11 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<VolunteerReviewInfoDto> GetApplyInfoAsync(string applyId);
 
         Task ReviewApplicationAsync(VolunteerReviewApplicationDto application, string id,string accountId);
+
+        Task<VolunteerResponseDto> GetVolInfoAsync(string accountId);
+
+        Task<VolunteerListDto> GetAllVolunteerAsync();
+
+        Task DelVolunteerAsync(string accountId, string adminId);
     }
 }

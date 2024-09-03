@@ -29,6 +29,8 @@ public partial class Account
 
     public string? Portrait { get; set; }
 
+    public decimal Money {  get; set; }
+
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();

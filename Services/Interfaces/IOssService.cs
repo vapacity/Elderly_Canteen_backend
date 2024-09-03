@@ -3,5 +3,7 @@
     public interface IOssService
     {
         Task<string> UploadFileAsync(IFormFile file, string fileName);
+        string GetDefaultImageUrl();
+        string GetDefaultProtrateUrl();
     }
 }

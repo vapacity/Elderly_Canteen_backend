@@ -104,13 +104,13 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("uploadImage")]
-        public async Task<IActionResult> UploadImage(string id, IFormFile image)
+        public async Task<IActionResult> UploadImage(string DishId, IFormFile image)
         {
             try
             {
-                await _dishService.UploadImageAsync(id, image);
+                string url = await _dishService.UploadImageAsync(DishId, image);
 
-                return Ok(new { Success = true, Msg = "图片上传成功" });
+                return Ok(new { Success = true, Msg = "图片上传成功" ,imageUrl = url});
             }
             catch (ArgumentException ex)
             {

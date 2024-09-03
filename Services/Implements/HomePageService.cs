@@ -34,7 +34,7 @@ public class HomePageService : IHomePageService
                             select new
                             {
                                 dishName = dish.DishName,
-                                picture =  dish.Picture,
+                                picture =  dish.ImageUrl,
                                 category = dish.Cate.CateName,
                                 sale = weekmenu.Sales,
                                 price = weekmenu.DisPrice > 0 ? weekmenu.DisPrice : dish.Price
@@ -46,8 +46,8 @@ public class HomePageService : IHomePageService
     }
     public async Task<List<object>> GetThisWeekMenu()
     {
-        // 加载默认静态图片的 byte[] 数据
-        byte[] defaultPicture = await LoadDefaultPictureAsync();
+/*        // 加载默认静态图片的 byte[] 数据
+        byte[] defaultPicture = await LoadDefaultPictureAsync();*/
 
         // 从数据库中查询数据
         var result = await (from dish in _dishRepository.GetAll()
@@ -56,7 +56,7 @@ public class HomePageService : IHomePageService
                             select new 
                             {
                                 dishName = dish.DishName,
-                                picture = dish.Picture,
+                                picture = dish.ImageUrl,
                                 week = weekmenu.Week.ToString("yyyy-MM-dd"),
                                 price = weekmenu.DisPrice > 0 ? weekmenu.DisPrice : dish.Price,
                                 disPrice = weekmenu.DisPrice

@@ -60,6 +60,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IDonateService, DonateService>();
 builder.Services.AddScoped<IEmployeeManagement, EmployeeManagement>();
 builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IVolunteerService, VolunteerService>();
 builder.Services.AddMemoryCache();//配置内存缓存
 builder.Services.AddScoped<IHomePageService, HomePageService>();
@@ -68,7 +69,7 @@ builder.Services.AddScoped<IRepoService, RepoService>();
 builder.Services.AddScoped<ICateService, CateService>();
 builder.Services.AddScoped<IDishService, DishService>();
 builder.Services.AddScoped<IWeekMenuService, WeekMenuService>();
-
+builder.Services.AddScoped<IOrderService, OrderService>();
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
@@ -138,6 +139,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+// 使用 CORS 中间件，允许所有来源
+app.UseCors("AllowAllOrigins");
 
 // 配置请求管道
 if (app.Environment.IsDevelopment())
@@ -156,8 +159,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-// 使用 CORS 中间件，允许所有来源
-app.UseCors("AllowAllOrigins");
+
 
 // 使用静态文件中间件
 // 这里将自定义的 uploads 目录配置为静态文件目录

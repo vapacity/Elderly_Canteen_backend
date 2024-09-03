@@ -4,9 +4,9 @@
     {
         public bool success { get; set; }
         public string msg { get; set; }
-        public List<ResponceData> responce { get; set; } // 改为List类型
+        public List<ResponseData> response { get; set; } // 改为List类型
 
-        public class ResponceData
+        public class ResponseData
         {
             public string applicationId { get; set; }
             public string accountId { get; set; }
@@ -19,9 +19,9 @@
         public bool success { get; set; }
         public string msg { get; set; }
 
-        public ResponceData responce { get; set; }
+        public ResponseData response { get; set; }
 
-        public partial class ResponceData
+        public partial class ResponseData
         {
             public string phoneNum { get; set; } // 电话号码，必须
             public string gender { get; set; } // 性别，必须

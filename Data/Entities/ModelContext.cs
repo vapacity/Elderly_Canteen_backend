@@ -142,6 +142,13 @@ public partial class ModelContext : DbContext
             entity.Property(e => e.Verifycode)
                 .HasPrecision(6)
                 .HasColumnName("VERIFYCODE");
+            entity.Property(e => e.Money)
+                .HasColumnType("decimal(10, 2)")  // 设置列的类型为 decimal，精度为 10，总位数为10位，其中小数点后2位
+                .HasDefaultValue(100.00m)        
+                .HasColumnName("MONEY")
+                .IsRequired(true);               
+
+
         });
 
         modelBuilder.Entity<Administrator>(entity =>
@@ -150,65 +157,18 @@ public partial class ModelContext : DbContext
 
             entity.ToTable("ADMINISTRATOR");
 
-            entity.HasIndex(e => e.AccountName, "IDX_ADMINISTRATOR_ACCOUNT_NAME");
-
-            entity.HasIndex(e => e.PhoneNum, "IDX_ADMINISTRATOR_PHONE_NUM");
-
             entity.Property(e => e.AccountId)
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasColumnName("ACCOUNT_ID");
-            entity.Property(e => e.AccountName)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("ACCOUNT_NAME");
-            entity.Property(e => e.Address)
-                .HasMaxLength(150)
-                .IsUnicode(false)
-                .HasColumnName("ADDRESS");
-            entity.Property(e => e.BirthDate)
-                .HasColumnType("DATE")
-                .HasColumnName("BIRTH_DATE");
             entity.Property(e => e.Email)
                 .HasMaxLength(32)
                 .IsUnicode(false)
                 .HasColumnName("EMAIL");
-            entity.Property(e => e.Gender)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("GENDER");
-            entity.Property(e => e.IdCard)
-                .HasMaxLength(18)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("ID_CARD");
-            entity.Property(e => e.Identity)
-                .HasMaxLength(10)
-                .IsUnicode(false)
-                .HasColumnName("IDENTITY");
-            entity.Property(e => e.Name)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("NAME");
-            entity.Property(e => e.Password)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("PASSWORD");
-            entity.Property(e => e.PhoneNum)
-                .HasMaxLength(11)
-                .IsUnicode(false)
-                .HasColumnName("PHONE_NUM");
-            entity.Property(e => e.Portrait)
-                .HasColumnType("BLOB")
-                .HasColumnName("PORTRAIT");
             entity.Property(e => e.Position)
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("POSITION");
-            entity.Property(e => e.VerifyCode)
-                .HasPrecision(6)
-                .HasColumnName("VERIFY_CODE");
         });
 
         modelBuilder.Entity<Cart>(entity =>

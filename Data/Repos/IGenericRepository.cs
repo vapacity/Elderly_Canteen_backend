@@ -17,5 +17,6 @@ namespace Elderly_Canteen.Data.Repos
         Task<T> FindByCompositeKeyAsync<T>(params object[] keyValues) where T : class;
         Task DeleteByCompositeKeyAsync<T>(params object[] keyValues) where T : class;
         Task<bool> DeleteByConditionAsync(Expression<Func<T, bool>> expression);
+        Task<int> CountAsync(Func<T, bool> predicate);
     }
 }
