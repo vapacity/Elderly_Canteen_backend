@@ -246,7 +246,7 @@ public class EmployeeManagement : IEmployeeManagement
             var employeeToModify = employee.First();
 
             // 更新员工信息
-            if(employeeToModify.Ispaidthismonth == false)
+            if(employeeToModify.Ispaidthismonth == true)
             {
                 throw new InvalidOperationException($"不能重复发放员工ID为 {id} 的员工工资。");
             }           
