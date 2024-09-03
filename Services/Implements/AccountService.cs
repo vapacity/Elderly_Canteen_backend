@@ -493,7 +493,7 @@ namespace Elderly_Canteen.Services.Implements
             DateTime date = ExtractBirthDateFromID(account.Idcard);
             account.Birthdate = date;
             await _accountRepository.UpdateAsync(account);
-            if (CalculateAge(date) >= 60)
+            if (account.Identity!="admin"&&CalculateAge(date) >= 60)
             {
                 var senior = new Senior
                 {
