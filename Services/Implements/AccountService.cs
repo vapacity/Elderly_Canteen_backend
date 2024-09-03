@@ -260,7 +260,6 @@ namespace Elderly_Canteen.Services.Implements
             };
 
             // 处理头像文件并生成路径
-            string avatarPath = null;
             if (avatar != null)
             {
                 // 上传图片到 OSS

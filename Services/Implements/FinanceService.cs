@@ -1,0 +1,107 @@
+﻿using Elderly_Canteen.Data.Entities;
+using Elderly_Canteen.Data.Repos;
+using Elderly_Canteen.Data.Repos.Elderly_Canteen.Data.Repos;
+using Elderly_Canteen.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace Elderly_Canteen.Services.Implements
+{
+    public class FinanceService : IFinanceService
+    {
+        private readonly IGenericRepository<Account> _accountRepository;
+        private readonly IGenericRepository<Senior> _seniorRepository;
+        private readonly IGenericRepository<Finance> _financeRepository;
+
+        public FinanceService(IGenericRepository<Account> accountRepository, IGenericRepository<Finance> financeRepository, IGenericRepository<Senior> seniorRepository)
+        {
+            _accountRepository = accountRepository;
+            _financeRepository = financeRepository;
+            _seniorRepository = seniorRepository;
+        }
+
+        // 扣除用户余额的逻辑
+        public async Task<object> DeductBalanceAsync(string accountId, decimal totalPrice)
+        {
+            // 1. 获取用户信息
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            var identity = account.Identity;
+            decimal money = account.Money;
+            decimal bonus = 0m;
+            if (identity == "senior")
+            {
+                bonus = totalPrice * 0.2m;
+                var senior = await _seniorRepository.GetByIdAsync(accountId);
+                if(bonus < senior.Subsidy) 
+                    bonus = 0m;
+                totalPrice -= bonus;
+            }
+            // 2. 检查余额是否足够
+            if (money < totalPrice) {
+                return new
+                {
+                    Success = false,
+                    Msg = "余额不足"
+                };
+            }
+
+            // 3. 扣除余额，并更新用户信息
+            account.Money -= totalPrice;
+            await _accountRepository.UpdateAsync(account);
+
+            // 4. 记录财务信息到Finance表中
+            string financeId = await GenerateFinanceIdAsync();
+            var newFinance = new Finance
+            {
+                FinanceId = financeId,
+                FinanceType = "点单",
+                FinanceDate = DateTime.Now,
+                Price = totalPrice,
+                InOrOut = "0",
+                AccountId = accountId,
+                Status = "待审核"
+            };
+            await _financeRepository.AddAsync(newFinance);
+
+            return new
+            {
+                Success = true,
+                Msg = "success",
+                FinanceId = financeId,
+                bonus = bonus
+            };
+
+        }
+        // 处理老人补贴的逻辑
+        async Task<string> ProcessSubsidyAsync(string accountId, decimal subsidyAmount)
+        {
+            // 1. 根据老人政策，计算应扣除的补贴金额
+            // 2. 从老人的补贴账户中扣除补贴
+            // 3. 记录财务信息，更新余额和补贴
+            return null;
+        }
+
+        async Task<string> GenerateFinanceIdAsync()
+        {
+            const string prefix = "200";
+
+            var maxFinanceId = await _financeRepository.GetAll()
+                .Where(f => f.FinanceId.StartsWith(prefix))
+                .OrderByDescending(f => f.FinanceId)
+                .Select(f => f.FinanceId)
+                .FirstOrDefaultAsync();
+
+            if (maxFinanceId == null)
+            {
+                return prefix + "00001";
+            }
+
+            // 提取数字部分并加1
+            var numericalPart = int.Parse(maxFinanceId.Substring(prefix.Length));
+            var newFinanceId = numericalPart + 1;
+
+            // 使用前导零格式化新的Finance ID
+            return prefix + newFinanceId.ToString("D5");
+        }
+    }
+
+}

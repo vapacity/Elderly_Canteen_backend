@@ -13,5 +13,10 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<RestockResponseDto> Restock(RestockRequestDto dto,string adminId);
         Task<AllRestockResponseDto> GetRestockHistory();
 
+        // 检查并减少库存
+        Task<bool> CheckAndReduceStockAsync(string dishId, DateTime week, int quantity);
+        Task CheckAndRemoveExpiredIngredientsAsync();
+        // 每日自动库存补货
+        Task ReplenishDailyStockAsync();
     }
 }

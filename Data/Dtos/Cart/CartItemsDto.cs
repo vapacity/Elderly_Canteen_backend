@@ -1,4 +1,4 @@
-﻿namespace Elderly_Canteen.Data.Dtos.Order
+﻿namespace Elderly_Canteen.Data.Dtos.Cart
 {
     using System;
     using System.Collections.Generic;
@@ -10,7 +10,7 @@
     /// <summary>
     /// Request
     /// </summary>
-    public partial class MenuResponseDto
+    public partial class CartItemsDto
     {
         [JsonProperty("menu")]
         public List<Menu> Menu { get; set; }
@@ -39,14 +39,7 @@
         [JsonProperty("imageUrl")]
         public string ImageUrl { get; set; }
 
-        [JsonProperty("sales")]
-        public int Sales { get; set; }
-
-        [JsonProperty("stock")]
-        public int Stock { get; set; }
-
-        [JsonProperty("category")]
-        public string Category { get; set; }
-
+        [JsonProperty("quantity")]
+        public int Quantity { get; set; }
     }
 }
