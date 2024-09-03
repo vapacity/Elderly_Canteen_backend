@@ -27,9 +27,6 @@
         [JsonProperty("administratorId")]
         public string AdministratorId { get; set; }
 
-        [JsonProperty("administratorName")]
-        public string AdministratorName { get; set; }
-
         [JsonProperty("amount")]
         public int Amount { get; set; }
 

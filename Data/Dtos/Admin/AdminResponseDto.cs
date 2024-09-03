@@ -19,6 +19,8 @@
         public string BirthDate { get; set; }
 
         public string Address { get; set; }
+
+        public string Email { get; set; }
     }
 
     public class AdminSearchDto
@@ -27,10 +29,10 @@
 
         public string Msg { get; set; }
 
-        public List<SearchData> Response { get; set; }
+        public List<AdminSearchData> Response { get; set; }
     }
 
-    public class SearchData
+    public class AdminSearchData
     {
 
         public string name { get; set; }

@@ -400,7 +400,6 @@ namespace Elderly_Canteen.Services.Implements
                 var restockDataList = restocks.Select(r => new Restocks
                 {
                     AdministratorId = r.AdministratorId,
-                    AdministratorName = admins.TryGetValue(r.AdministratorId, out var admin) ? admin.Name : "Unknown",
                     Amount = r.Quantity,
                     Date = finances.TryGetValue(r.FinanceId, out var finance) ? finance.FinanceDate : DateTime.Now,
                     ExpirationTime = repositoryData.TryGetValue(r.IngredientId, out var repo) ? repo.ExpirationTime : DateTime.MinValue,
