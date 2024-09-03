@@ -89,9 +89,9 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<AdminSearchDto>> SearchAdmin([FromQuery] string? name, [FromQuery] string? identity)
+        public async Task<ActionResult<AdminSearchDto>> SearchAdmin([FromQuery] string? name, [FromQuery] string? position)
         {
-            var res = await _adminService.SerchAdminAsync(name, identity);
+            var res = await _adminService.SerchAdminAsync(name, position);
             if (res == null || !res.Success)
             {
                 return NotFound(res);
