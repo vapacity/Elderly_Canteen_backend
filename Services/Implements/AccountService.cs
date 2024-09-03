@@ -320,7 +320,8 @@ namespace Elderly_Canteen.Services.Implements
                     gender = account.Gender,
                     birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
-                    name = account.Name
+                    name = account.Name,
+                    money= account.Money,
                 }
             };
         }
