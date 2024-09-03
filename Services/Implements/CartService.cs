@@ -339,7 +339,16 @@ namespace Elderly_Canteen.Services.Implements
 
 /*        public async Task<CartItemResponseDto> EnsureCartItem(string cartId,string accountId)
         {
-
+                // 查找与用户关联的购物车
+                // 查找购物车item
+                // 插入orderinfo表中
+                // 写插入前的trigger，应该往finance表中插入新的finance
+                // finance认证逻辑，一开始有一个in的启动资金，需要验证所有总和在finance表变动前后是否不变，变动则需要alert（alert如何在前端显示），trigger写
+                // 写插入前的trigger，减去weekmenu中当天与dishId相同的那一项的stock，减去的数量等于这个当前订单的quantity数量
+                // 
+                // 
+                // 
+    
         }*/
     }
 }
