@@ -19,17 +19,20 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IGenericRepository<Volunteer> _volunteerRepository;
         private readonly IGenericRepository<DeliverV> _delivervRepository;
+        private readonly IGenericRepository<Senior> _seniorRepository;
         public VolunteerService(IGenericRepository<Account> accountRepository, 
             IGenericRepository<VolApplication> applicationRepository, 
             IGenericRepository<Volunteer> volunteerRepository, 
             IGenericRepository<VolReview> reviewRepository, 
-            IGenericRepository<DeliverV> delivervRepository)
+            IGenericRepository<DeliverV> delivervRepository,
+            IGenericRepository<Senior> seniorRepository)
         {
             _applicationRepository = applicationRepository;
             _accountRepository = accountRepository;
             _volunteerRepository = volunteerRepository;
             _reviewRepository = reviewRepository;
             _delivervRepository = delivervRepository;
+            _seniorRepository = seniorRepository;
         }
 
         //志愿者申请
@@ -48,6 +51,11 @@ namespace Elderly_Canteen.Services.Implements
             if (vol != null)
             {
                 throw new InvalidOperationException("用户已是志愿者");
+            }
+            var senior = await _seniorRepository.GetByIdAsync(accountId);
+            if (senior != null)
+            {
+                throw new InvalidOperationException("60岁以上老人不能申请志愿者");
             }
 
             var applyList = await _applicationRepository.FindByConditionAsync(e => e.AccountId == accountId);

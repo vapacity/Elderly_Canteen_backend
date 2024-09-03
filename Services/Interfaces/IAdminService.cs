@@ -11,5 +11,9 @@ namespace Elderly_Canteen.Services.Interfaces
         Task AddAdminAsync(AdminRegisterDto registerRequestDto);
         Task DeleteAdminAsync(string id);
         Task<AdminSearchDto> SerchAdminAsync(string? accountName, string? identity);
+
+        Task<AdminInfoGetDto> GetAdminInfoAsync(string accountId);
+
+        Task AlterAdminInfoAsync(AdminInfoChangeDto personInfo, string accountId);
     }
 }

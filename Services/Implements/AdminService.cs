@@ -277,6 +277,115 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
+        //获得个人信息逻辑
+        public async Task<AdminInfoGetDto> GetAdminInfoAsync(string accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                return new AdminInfoGetDto
+                {
+                    Success = false,
+                    Msg = "用户不存在",
+                    Response = null
+                };
+            }
+            var admin = await _adminRepository.GetByIdAsync(accountId);
+            if (admin == null)
+            {
+                return new AdminInfoGetDto
+                {
+                    Success = false,
+                    Msg = "该用户不是管理员",
+                    Response = null
+                };
+            }
+
+            return new AdminInfoGetDto
+            {
+                Success = true,
+                Msg = "获取成功",
+                Response = new AdminInfoData
+                {
+                    accountId = account.Accountid,
+                    accountName = account.Accountname,
+                    phoneNum = account.Phonenum,
+                    portrait = account.Portrait,
+                    gender = account.Gender,
+                    birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
+                    address = account.Address,
+                    name = account.Name,
+                    idCard = account.Idcard,
+                    money = (double)account.Money,
+                    position=admin.Position,
+                    email=admin.Email
+                }
+            };
+        }
+
+        //修改个人信息逻辑
+        public async Task AlterAdminInfoAsync(AdminInfoChangeDto personInfo, string accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                throw new InvalidOperationException($"ID为 {accountId} 的用户不存在。");
+            }
+
+            var admin = await _adminRepository.GetByIdAsync(accountId);
+            if (admin == null)
+            {
+                throw new InvalidOperationException($"ID为 {accountId} 的管理员不存在。");
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.AccountName))
+            {
+                account.Accountname = personInfo.AccountName;
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.PhoneNum))
+            {
+                // 检查数据库中是否已存在相同的手机号
+                var existingAccount = await _accountRepository.GetAll()
+                    .FirstOrDefaultAsync(a => a.Phonenum == personInfo.PhoneNum && a.Accountid != accountId);
+
+                if (existingAccount != null)
+                {
+                    throw new InvalidOperationException("手机号已被占用");
+                }
+                account.Phonenum = personInfo.PhoneNum;
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.Gender))
+            {
+                account.Gender = personInfo.Gender;
+            }
+
+            if (personInfo.BirthDate != null)
+            {
+                if (DateTime.TryParse(personInfo.BirthDate, out DateTime birthDate))
+                {
+                    account.Birthdate = birthDate;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.Address))
+            {
+                account.Address = personInfo.Address;
+            }
+
+            if (!string.IsNullOrEmpty(personInfo.Email))
+            {
+                admin.Email = personInfo.Email;
+            }
+
+            await _accountRepository.UpdateAsync(account);
+            await _adminRepository.UpdateAsync(admin);
+        }
+
+
+
+
 
 
 

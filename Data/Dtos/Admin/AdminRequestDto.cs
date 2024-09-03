@@ -31,4 +31,19 @@
 
         public string Email { get; set; }
     }
+
+    public class AdminInfoChangeDto
+    {
+        public string? PhoneNum { get; set; }
+
+        public string? Gender { get; set; }
+
+        public string? BirthDate { get; set; }
+
+        public string? AccountName { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? Address { get; set; }
+    }
 }

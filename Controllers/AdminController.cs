@@ -5,6 +5,8 @@ using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Permissions;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Elderly_Canteen.Controllers
 {
@@ -97,6 +99,46 @@ namespace Elderly_Canteen.Controllers
                 return NotFound(res);
             }
             return Ok(res);
+        }
+
+        [Authorize]
+        [HttpGet("getAdminInfo")]
+        public async Task<IActionResult> GetAdminInfo()
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new { msg = "无效的Token" });
+            }
+
+            // 调用Service函数获取个人信息
+            var result = await _adminService.GetAdminInfoAsync(accountId);
+            if (result.Success == false)
+            {
+                return NotFound(result);
+            }
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("alterAdminInfo")]
+        public async Task<IActionResult> AlterAdminInfo(AdminInfoChangeDto personInfo)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new { msg = "无效的Token" });
+            }
+
+            // 将头像文件传递给Service层进行处理
+            try { 
+                await _adminService.AlterAdminInfoAsync(personInfo, accountId);
+                return Ok(new { success = true, msg = "修改成功!" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { success = false, msg = ex.Message});
+            }
         }
     }
 }
