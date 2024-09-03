@@ -319,7 +319,8 @@ namespace Elderly_Canteen.Services.Implements
                     gender = account.Gender,
                     birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
                     address = account.Address,
-                    name = account.Name
+                    name = account.Name,
+                    money= account.Money,
                 }
             };
         }
@@ -492,7 +493,7 @@ namespace Elderly_Canteen.Services.Implements
             DateTime date = ExtractBirthDateFromID(account.Idcard);
             account.Birthdate = date;
             await _accountRepository.UpdateAsync(account);
-            if (CalculateAge(date) >= 60)
+            if (account.Identity!="admin"&&CalculateAge(date) >= 60)
             {
                 var senior = new Senior
                 {
