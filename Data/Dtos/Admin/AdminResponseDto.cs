@@ -45,4 +45,41 @@
 
         public string gender { get; set; }
     }
+
+    public class AdminInfoGetDto
+    {
+        public bool Success { get; set; }
+
+        public string Msg { get; set; }
+
+        public AdminInfoData Response { get; set; }
+    }
+
+    public class AdminInfoData
+    {
+        public string accountId { get; set; }
+
+        public string accountName { get; set; }
+
+        public string phoneNum { get; set; }
+
+        public string portrait { get; set; }
+
+        public string gender { get; set; }
+
+        public string name { get; set; }
+
+        public string idCard { get; set; }
+
+        public string birthDate { get; set; }
+
+        public string address { get; set; }
+
+        public string email { get; set; }
+
+        public double money { get; set; }
+
+        public string position { get; set; }
+    }
 }
+
