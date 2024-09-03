@@ -99,7 +99,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 userToModify.Identity = user.Identity;
             }
-            if (!string.IsNullOrEmpty(user.Identity))
+            if (!string.IsNullOrEmpty(user.Gender))
             {
                 userToModify.Gender = user.Gender;
             }
@@ -127,7 +127,7 @@ namespace Elderly_Canteen.Services.Implements
 
             await _usersRepository.DeleteAsync(id);
         }
-        
+
         // 有条件搜索
         public async Task<UserSearchDto> SerchUserAsync(string? accountName, string? identity)
         {
@@ -136,14 +136,17 @@ namespace Elderly_Canteen.Services.Implements
             if (string.IsNullOrWhiteSpace(accountName) && string.IsNullOrWhiteSpace(identity))
             {
                 // 如果 accountName 和 identity 都为空或仅包含空白字符，返回所有用户
-                users = (await _usersRepository.GetAllAsync()).ToList();
+                users = (await _usersRepository.FindByConditionAsync(u =>
+                    u.Identity != "admin" && u.Accountid != "DELETED"
+                )).ToList();
             }
             else
             {
-                // 如果 accountName 和 identity 不为空，两者都必须满足
+                // 如果 accountName 和 identity 不为空，两者都必须满足，并且过滤掉 identity 为 "admin" 和 accountId 为 "DELETED" 的账户
                 users = (await _usersRepository.FindByConditionAsync(u =>
                     (string.IsNullOrWhiteSpace(accountName) || u.Accountname.Contains(accountName)) &&
-                    (string.IsNullOrWhiteSpace(identity) || u.Identity.Contains(identity))
+                    (string.IsNullOrWhiteSpace(identity) || u.Identity.Contains(identity)) &&
+                    u.Identity != "admin" && u.Accountid != "DELETED"
                 )).ToList();
             }
 
@@ -165,6 +168,7 @@ namespace Elderly_Canteen.Services.Implements
                 Success = true
             };
         }
+
 
 
 
