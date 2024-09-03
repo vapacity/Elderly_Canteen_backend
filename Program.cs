@@ -55,6 +55,9 @@ builder.Services.AddSingleton<IOssService>(sp => new OSSService(
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 // 注册其他服务
+builder.Services.AddHostedService<TimedHostedService>();
+builder.Services.AddScoped<IFinanceService, FinanceService>();
+
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IDonateService, DonateService>();
@@ -70,7 +73,9 @@ builder.Services.AddScoped<ICateService, CateService>();
 builder.Services.AddScoped<IDishService, DishService>();
 builder.Services.AddScoped<IWeekMenuService, WeekMenuService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
+
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);

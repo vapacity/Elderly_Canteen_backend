@@ -10,10 +10,10 @@ namespace Elderly_Canteen.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class CartController:ControllerBase
+    public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
-        
+
         public CartController(ICartService cartService)
         {
             _cartService = cartService;
@@ -105,11 +105,60 @@ namespace Elderly_Canteen.Controllers
 
 
         [HttpPost("ensureCart")]
-        public async Task<IActionResult> EnsureCart([FromBody] string CART_ID)
+        public async Task<IActionResult> EnsureCart([FromBody] string CART_ID, bool deliver_or_dining)
         {
+            // 获取当前用户的 AccountId
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             string cartId = CART_ID;
+            var response = await _cartService.EnsureCartItem(CART_ID, deliver_or_dining, accountId);
+            if (response.Success)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
+        }
 
-            return null;
+        [HttpGet("getCartItem{cartId}")]
+        public async Task<IActionResult> GetCartItems(string cartId)
+        {
+            // 获取当前用户的 AccountId
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var response = await _cartService.GetCartItemsAsync(cartId, accountId);
+            if (response.Success)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return BadRequest(response);
+            }
+        }
+
+        [HttpPost("clearCart")]
+        public async Task<IActionResult> ClearCart(string cartId) 
+        {
+            // 获取当前用户的 AccountId
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var response = await _cartService.ClearItemsAsync(cartId);
+            if (response)
+            {
+                return Ok(new
+                {
+                    success = true,
+                    msg = "successfully clear"
+                });
+            }
+            else
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    msg = "cartId doesn't exist or has been associated with order"
+                });
+            }
         }
     }
 }

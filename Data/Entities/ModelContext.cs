@@ -604,7 +604,7 @@ public partial class ModelContext : DbContext
             entity.HasIndex(e => e.Status, "IDX_ORDER_INF_STATUS");
 
             entity.Property(e => e.OrderId)
-                .HasMaxLength(10)
+                .HasMaxLength(16)
                 .IsUnicode(false)
                 .HasColumnName("ORDER_ID");
             entity.Property(e => e.Bonus)
