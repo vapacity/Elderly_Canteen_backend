@@ -9,7 +9,7 @@
         public string identity { get; set; } // 身份类型，必须
         public string portrait { get; set; } // 头像URL，必须
         public string gender { get; set; } // 性别，必须
-
+        public decimal money { get; set; }
         // 非必须字段
         public DateTime? birthDate { get; set; } // 出生日期，可选
         public string? address { get; set; } // 地址，可选
