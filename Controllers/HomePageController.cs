@@ -75,8 +75,26 @@ namespace Elderly_Canteen.Controllers
         [HttpGet("getReviews")]
         public async Task<IActionResult> GetReviews()
         {
-            var result = await _homePageService.GetReviewsAsync();
-            return Ok(result);
+            
+            try
+            {
+                var result = await _homePageService.GetReviewsAsync();
+                if(result==null)
+                {
+                    return NotFound("没有找到评价");
+                }
+                    return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // 错误处理
+                return StatusCode(500, new
+                {
+                    success = false,
+                    msg = $"获取评价列表出错: {ex.Message}",
+                    response = new List<object>()
+                });
+            }
         }
     }
 
