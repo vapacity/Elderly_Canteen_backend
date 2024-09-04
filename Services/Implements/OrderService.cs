@@ -4,7 +4,7 @@
     using Elderly_Canteen.Data.Repos;
     using Elderly_Canteen.Services.Interfaces;
     using Elderly_Canteen.Data.Dtos.Order;
-    public class OrderService:IOrderService
+    public class OrderService : IOrderService
     {
         private readonly IGenericRepository<Weekmenu> _weekMenuRepository;
         private readonly IGenericRepository<Dish> _dishRepository;
@@ -14,6 +14,8 @@
         private readonly IGenericRepository<Cart> _cartRepository;
         private readonly IGenericRepository<CartItem> _cartItemRepository;
         private readonly IGenericRepository<DeliverOrder> _deliverOrderRepository;
+        private readonly IGenericRepository<OrderReview> _orderReviewRepository;
+        private readonly IGenericRepository<DeliverV> _deliverVRepository;
 
         public OrderService(
             IGenericRepository<Weekmenu> weekMenuRepository,
@@ -23,7 +25,9 @@
             IGenericRepository<Account> accountRepository,
             IGenericRepository<Cart> cartRepository,
             IGenericRepository<CartItem> cartItemRepository,
-            IGenericRepository<DeliverOrder> deliverOrderRepository)
+            IGenericRepository<DeliverOrder> deliverOrderRepository,
+            IGenericRepository<OrderReview> orderReviewRepository,
+            IGenericRepository<DeliverV> deliverVRepository)
         {
             _weekMenuRepository = weekMenuRepository;
             _dishRepository = dishRepository;
@@ -33,6 +37,8 @@
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _deliverOrderRepository = deliverOrderRepository;
+            _orderReviewRepository = orderReviewRepository;
+            _deliverVRepository = deliverVRepository;
         }
         //计算当前周数
         private DateTime GetWeekStartDate()
@@ -66,7 +72,7 @@
 
             // 计算本周的周一日期
             DayOfWeek dayOfWeek = today.DayOfWeek;
-            
+
             // 获得当天日期
             var todayDate = today.Date;
             // 将 DayOfWeek 映射为 Mon, Tue, Wed 等形式
@@ -143,44 +149,44 @@
             return totalPrice;
         }
 
-        public async Task<OrderInfoDto> CreateOrderAsync(string cartId, string accountId, string? newAddress,bool deliver_or_dining, string financeId, List<CartItem> cartItems)
+        public async Task<OrderInfoDto> CreateOrderAsync(string cartId, string accountId, string? newAddress, bool deliver_or_dining, string financeId, List<CartItem> cartItems)
         {
             // 1. 初始化变量，用于计算总价
             decimal totalPrice = 0;
             List<OrderDish> orderDishes = new List<OrderDish>();
             totalPrice = await CalculateTotalPrice(cartItems);
-           /* // 获取今日菜单
-            var menuToday = await GetMenuToday();
-            var todayMenuItems = menuToday.Menu.ToDictionary(m => m.DishId, m => m);
+            /* // 获取今日菜单
+             var menuToday = await GetMenuToday();
+             var todayMenuItems = menuToday.Menu.ToDictionary(m => m.DishId, m => m);
 
-            // 2. 遍历购物车项，计算总价并创建订单菜品项
-            foreach (var cartItem in cartItems)S
-            {
-                // 查找菜品在今日菜单中的信息
-                if (todayMenuItems.TryGetValue(cartItem.DishId, out var menuItem))
-                {
-                    decimal itemTotal = cartItem.Quantity * (menuItem.DiscountPrice==0 ? menuItem.DishPrice : menuItem.DiscountPrice);
-                    totalPrice += itemTotal;
+             // 2. 遍历购物车项，计算总价并创建订单菜品项
+             foreach (var cartItem in cartItems)S
+             {
+                 // 查找菜品在今日菜单中的信息
+                 if (todayMenuItems.TryGetValue(cartItem.DishId, out var menuItem))
+                 {
+                     decimal itemTotal = cartItem.Quantity * (menuItem.DiscountPrice==0 ? menuItem.DishPrice : menuItem.DiscountPrice);
+                     totalPrice += itemTotal;
 
-                    // 创建订单菜品项
-                    var orderDish = new OrderDish
-                    {
-                        DishName = menuItem.DishName,
-                        Picture = menuItem.ImageUrl,
-                        Price = menuItem.DiscountPrice == 0 ? menuItem.DishPrice : menuItem.DiscountPrice,
-                        Quantity = cartItem.Quantity
-                    };
+                     // 创建订单菜品项
+                     var orderDish = new OrderDish
+                     {
+                         DishName = menuItem.DishName,
+                         Picture = menuItem.ImageUrl,
+                         Price = menuItem.DiscountPrice == 0 ? menuItem.DishPrice : menuItem.DiscountPrice,
+                         Quantity = cartItem.Quantity
+                     };
 
-                    orderDishes.Add(orderDish);
-                }
-                else
-                {
-                    throw new Exception($"菜品ID {cartItem.DishId} 不在今日菜单中，无法生成订单。");
-                }
-            }*/
+                     orderDishes.Add(orderDish);
+                 }
+                 else
+                 {
+                     throw new Exception($"菜品ID {cartItem.DishId} 不在今日菜单中，无法生成订单。");
+                 }
+             }*/
 
             var account = await _accountRepository.GetByIdAsync(accountId);
-            if(account.Address == null && newAddress == null)
+            if (account.Address == null && newAddress == null)
             {
                 return new OrderInfoDto
                 {
@@ -202,11 +208,11 @@
                 Status = "待处理", // 订单初始状态
                 Bonus = bonus, // 初始为0
                 Remark = "无评论", // 根据业务逻辑填充
-                FinanceId =financeId, 
+                FinanceId = financeId,
             };
-            
 
-            
+
+
             // 4. 保存订单记录到OrderInfo表中
             await _orderInfRepository.AddAsync(order);
             // 3.5 生成配送订单
@@ -231,9 +237,10 @@
                 Success = true,
                 Response = new OrderItem
                 {
+                    OrderId = order.OrderId,
                     CusAddress = address ?? "error", // 根据业务逻辑填充
                     DeliverOrDining = deliver_or_dining,
-                    DeliverStatus = deliver_or_dining?"未接单":"堂食", // 初始配送状态
+                    DeliverStatus = deliver_or_dining ? "未接单" : "堂食", // 初始配送状态
                     Money = totalPrice,
                     OrderDishes = orderDishes,
                     Remark = order.Remark,
@@ -308,7 +315,8 @@
 
                     if (dish != null)
                     {
-                        orderDishes.Add(new OrderDish{
+                        orderDishes.Add(new OrderDish
+                        {
                             DishName = dish.DishName,
                             Picture = dish.ImageUrl,
                             Price = cartItem.Quantity * dish.Price, // 假设价格保存在 Dish 中
@@ -316,14 +324,15 @@
                         });
                     }
                 }
-                
+
                 var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
                 // 4. 构建 OrderItem
                 var orderItem = new OrderItem
                 {
-                    CusAddress =  deliverOrder != null? deliverOrder.CusAddress: "堂食",  // 获取客户地址
+                    OrderId = order.OrderId,
+                    CusAddress = deliverOrder != null ? deliverOrder.CusAddress : "堂食",  // 获取客户地址
                     DeliverOrDining = order.DeliverOrDining == "D",  // 处理外送或堂食
-                    DeliverStatus = deliverOrder !=null? deliverOrder.DeliverStatus:"堂食",  // 配送状态可以根据业务逻辑设置
+                    DeliverStatus = deliverOrder != null ? deliverOrder.DeliverStatus : "堂食",  // 配送状态可以根据业务逻辑设置
                     Money = finance.Price,
                     OrderDishes = orderDishes,
                     Remark = order.Remark ?? "no remark",
@@ -345,7 +354,94 @@
             };
         }
 
-    }
+        public async Task<NormalResponseDto> ConfirmOrderAsync(string orderId, string accountId)
+        {
+            try
+            {
+                var order = await _orderInfRepository.GetByIdAsync(orderId);
+                if (order == null)
+                {
+                    return new NormalResponseDto
+                    {
+                        Success = false,
+                        Message = "orderId 不存在关联订单"
+                    };
+                }
+                order.Status = "已确认";
+                var newReview = new OrderReview
+                {
+                    OrderId = orderId,
+                    CStars = 5,
+                    CReviewText = "无评价"
+                };
+                await _orderReviewRepository.AddAsync(newReview);
 
+                await _orderInfRepository.UpdateAsync(order);
+                if (order.DeliverOrDining == "D")
+                {
+                    var deliverOrder = await _deliverOrderRepository.GetByIdAsync(orderId);
+                    if (deliverOrder == null)
+                    {
+                        return new NormalResponseDto
+                        {
+                            Success = false,
+                            Message = "数据库错误，存在不一致"
+                        };
+                    }
+                    deliverOrder.DeliverStatus = "已送达";
+                }
+
+                return new NormalResponseDto
+                {
+                    Success = true,
+                    Message = "修改成功"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new NormalResponseDto
+                {
+                    Success = false,
+                    Message = ex.Message,
+                };
+            }
+        }
+        public async Task<GetOdMsgResponseDto> GetODMsg(string orderId)
+        {
+            var volun = await _deliverVRepository.GetByIdAsync(orderId);
+            if (volun == null)
+            {
+                return new GetOdMsgResponseDto
+                {
+                    Success = false,
+                    Msg = "没有志愿者接单"
+                };
+            }
+            var volAccount = await _accountRepository.GetByIdAsync(volun.OrderId);
+            if (volAccount == null)
+            {
+                return new GetOdMsgResponseDto
+                {
+                    Success = false,
+                    Msg = "数据库错误，志愿者id存在但志愿者账户不存在"
+                };
+
+            }
+
+            return new GetOdMsgResponseDto
+            {
+                Success = true,
+                Msg = "success",
+                Response = new VolunteerMsg
+                {
+                    VolunteerId = volun.OrderId,
+                    VolunteerName = volAccount.Name
+                }
+            };
+
+        }
+    }
 }
+
+    
 

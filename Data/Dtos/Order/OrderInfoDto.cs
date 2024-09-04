@@ -33,6 +33,8 @@
     /// </summary>
     public partial class OrderItem
     {
+        [JsonProperty("ORDER_ID")]
+        public string OrderId { get; set; }
         /// <summary>
         /// 客户地址
         /// </summary>

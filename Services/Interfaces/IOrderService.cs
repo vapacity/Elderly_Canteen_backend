@@ -14,5 +14,9 @@ namespace Elderly_Canteen.Services.Interfaces
 
         // 返回历史所有订单
         Task<GetOrderResponseDto> GetHistoryOrderInfoAsync(string accountId);
+
+        Task<NormalResponseDto> ConfirmOrderAsync(string orderId,string accountId);
+
+        Task<GetOdMsgResponseDto> GetODMsg(string orderId);
     }
 }

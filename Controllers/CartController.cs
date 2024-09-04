@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Elderly_Canteen.Data.Dtos.Cart;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System;
 namespace Elderly_Canteen.Controllers
 {
     [Authorize]
@@ -138,11 +140,11 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("clearCart")]
-        public async Task<IActionResult> ClearCart(string cartId) 
+        public async Task<IActionResult> ClearCart([FromBody]NormalRequestDto dto) 
         {
             // 获取当前用户的 AccountId
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var response = await _cartService.ClearItemsAsync(cartId);
+            var response = await _cartService.ClearItemsAsync(dto.cartId);
             if (response)
             {
                 return Ok(new

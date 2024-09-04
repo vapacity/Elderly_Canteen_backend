@@ -227,7 +227,7 @@ namespace Elderly_Canteen.Services.Implements
             else
             {
                 await _repoRepository.DeleteByCompositeKeyAsync<Repository>(ingreId, expiry);
-                await _ingreRepository.DeleteAsync(ingreId);
+                //await _ingreRepository.DeleteAsync(ingreId);
                 return new RepoResponseDto
                 {
                     message = "delete successfully",
@@ -704,7 +704,6 @@ namespace Elderly_Canteen.Services.Implements
             // 库存成功减少
             return true;
         }
-
 
     }
 }
