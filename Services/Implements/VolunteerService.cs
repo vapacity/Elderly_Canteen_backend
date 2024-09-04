@@ -252,6 +252,7 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
+        //个人信息
         public async Task<VolunteerResponseDto> GetVolInfoAsync(string accountId)
         {
             var account = await _accountRepository.GetByIdAsync(accountId);

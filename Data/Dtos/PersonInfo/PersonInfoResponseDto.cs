@@ -22,6 +22,7 @@
         public string? birthDate { get; set; } // 出生日期，可选
         public string? address { get; set; } // 地址，可选
         public string? name { get; set; } // 姓名，可选
+        public string? idCard { get; set; } // 姓名，可选
         public decimal money { get; set; }
     }
 }
