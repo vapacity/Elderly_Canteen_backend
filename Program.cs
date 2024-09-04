@@ -75,6 +75,7 @@ builder.Services.AddScoped<IWeekMenuService, WeekMenuService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
+builder.Services.AddScoped<IVolServeService, VolServeService>();
 
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
