@@ -12,10 +12,12 @@ namespace Elderly_Canteen.Services.Implements
     public class IngreService:IIngreService
     {
         private readonly IGenericRepository<Ingredient> _ingreRepository;
+        private readonly IGenericRepository<Formula> _formulaRepository;
         
-        public IngreService(IGenericRepository<Repository> repoRepository, IGenericRepository<Ingredient> ingreRepository)
+        public IngreService(IGenericRepository<Repository> repoRepository, IGenericRepository<Ingredient> ingreRepository,IGenericRepository<Formula> formulaRepository)
         {
             _ingreRepository = ingreRepository;
+            _formulaRepository = formulaRepository;
         }
 
         public async Task<AllIngreResponseDto> GetRepo(string? name)
@@ -135,6 +137,15 @@ namespace Elderly_Canteen.Services.Implements
                 };
             else
             {
+                var inFormula = await _formulaRepository.FindByConditionAsync(f=> f.IngredientId == ingreId);
+                if (inFormula.Any())
+                {
+                    return new IngreResponseDto
+                    {
+                        message = "ingredient found in formula, delete refused",
+                        success = false,
+                    };
+                }
                 await _ingreRepository.DeleteAsync(ingreId);
                 return new IngreResponseDto
                 {

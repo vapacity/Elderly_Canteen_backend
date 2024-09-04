@@ -60,6 +60,7 @@ namespace Elderly_Canteen.Controllers
             if (date == null)
             {
                 return BadRequest();
+            
             }
             var response = await _wmService.GetWeekMenuByDateAsync(date);
             if (response == null)

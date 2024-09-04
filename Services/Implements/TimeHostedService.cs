@@ -43,8 +43,12 @@ namespace Elderly_Canteen.Services.Implements
                 // 调用每日库存补充函数
                 stockService.ReplenishDailyStockAsync().GetAwaiter().GetResult();
 
-                // 调用检查和删除过期食材函数
+                // 调用检查和删除过期仓库项函数
                 stockService.CheckAndRemoveExpiredIngredientsAsync().GetAwaiter().GetResult();
+
+                // 删除过期购物车
+
+                //
             }
         }
 

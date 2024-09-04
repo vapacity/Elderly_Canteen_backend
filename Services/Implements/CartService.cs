@@ -365,7 +365,7 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
-        public async Task<CartItemResponseDto> EnsureCartItem(string cartId, bool deliver_or_dining, string accountId)
+        public async Task<CartItemResponseDto> EnsureCartItem(string cartId, string? newAddress, bool deliver_or_dining, string accountId)
         {
             // 查找与用户关联的购物车
             // 查找购物车item
@@ -433,7 +433,7 @@ namespace Elderly_Canteen.Services.Implements
                     }
 
                     // 4. 调用订单管理服务生成订单
-                    var orderInfo = await _orderService.CreateOrderAsync(cartId, accountId, deliver_or_dining, response.FinanceId, cartItems);
+                    var orderInfo = await _orderService.CreateOrderAsync(cartId, accountId,newAddress, deliver_or_dining, response.FinanceId, cartItems);
                     if (orderInfo.Success == false)
                     {
                         await transaction.RollbackAsync();

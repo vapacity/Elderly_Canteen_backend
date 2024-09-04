@@ -11,20 +11,28 @@
         private readonly IGenericRepository<OrderInf> _orderInfRepository;
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IGenericRepository<Finance> _financeRepository;
-
+        private readonly IGenericRepository<Cart> _cartRepository;
+        private readonly IGenericRepository<CartItem> _cartItemRepository;
+        private readonly IGenericRepository<DeliverOrder> _deliverOrderRepository;
 
         public OrderService(
             IGenericRepository<Weekmenu> weekMenuRepository,
             IGenericRepository<Dish> dishRepository,
             IGenericRepository<Finance> financeRepository,
             IGenericRepository<OrderInf> orderInfRepository,
-            IGenericRepository<Account> accountRepository)
+            IGenericRepository<Account> accountRepository,
+            IGenericRepository<Cart> cartRepository,
+            IGenericRepository<CartItem> cartItemRepository,
+            IGenericRepository<DeliverOrder> deliverOrderRepository)
         {
             _weekMenuRepository = weekMenuRepository;
             _dishRepository = dishRepository;
             _financeRepository = financeRepository;
             _orderInfRepository = orderInfRepository;
             _accountRepository = accountRepository;
+            _cartRepository = cartRepository;
+            _cartItemRepository = cartItemRepository;
+            _deliverOrderRepository = deliverOrderRepository;
         }
         //计算当前周数
         private DateTime GetWeekStartDate()
@@ -135,7 +143,7 @@
             return totalPrice;
         }
 
-        public async Task<OrderInfoDto> CreateOrderAsync(string cartId, string accountId, bool deliver_or_dining, string financeId, List<CartItem> cartItems)
+        public async Task<OrderInfoDto> CreateOrderAsync(string cartId, string accountId, string? newAddress,bool deliver_or_dining, string financeId, List<CartItem> cartItems)
         {
             // 1. 初始化变量，用于计算总价
             decimal totalPrice = 0;
@@ -146,7 +154,7 @@
             var todayMenuItems = menuToday.Menu.ToDictionary(m => m.DishId, m => m);
 
             // 2. 遍历购物车项，计算总价并创建订单菜品项
-            foreach (var cartItem in cartItems)
+            foreach (var cartItem in cartItems)S
             {
                 // 查找菜品在今日菜单中的信息
                 if (todayMenuItems.TryGetValue(cartItem.DishId, out var menuItem))
@@ -172,7 +180,7 @@
             }*/
 
             var account = await _accountRepository.GetByIdAsync(accountId);
-            if(account.Address == null)
+            if(account.Address == null && newAddress == null)
             {
                 return new OrderInfoDto
                 {
@@ -180,6 +188,8 @@
                     Msg = "account address is null"
                 };
             }
+            var address = newAddress ?? account.Address;
+
             decimal bonus = 0;
             if (account.Identity == "senior")
                 bonus = totalPrice * 0.2m;
@@ -194,10 +204,26 @@
                 Remark = "无评论", // 根据业务逻辑填充
                 FinanceId =financeId, 
             };
+            
 
+            
             // 4. 保存订单记录到OrderInfo表中
             await _orderInfRepository.AddAsync(order);
+            // 3.5 生成配送订单
+            if (deliver_or_dining)
+            {
+                var newOrder = new DeliverOrder
+                {
+                    OrderId = order.OrderId,
+                    CartId = cartId,
+                    DeliverPhone = "未接单",
+                    CustomerPhone = account.Phonenum,
+                    CusAddress = address,
+                    DeliverStatus = "未接单"
+                };
+                await _deliverOrderRepository.AddAsync(newOrder);
 
+            }
             // 5. 创建并返回 OrderInfoDto
             var orderInfoDto = new OrderInfoDto
             {
@@ -205,9 +231,9 @@
                 Success = true,
                 Response = new OrderItem
                 {
-                    CusAddress = account.Address, // 根据业务逻辑填充
+                    CusAddress = address ?? "error", // 根据业务逻辑填充
                     DeliverOrDining = deliver_or_dining,
-                    DeliverStatus = deliver_or_dining?"待配送":"堂食", // 初始配送状态
+                    DeliverStatus = deliver_or_dining?"未接单":"堂食", // 初始配送状态
                     Money = totalPrice,
                     OrderDishes = orderDishes,
                     Remark = order.Remark,
@@ -241,6 +267,83 @@
             return orderId;
         }
         // 3. 返回订单信息
+
+        public async Task<GetOrderResponseDto> GetHistoryOrderInfoAsync(string accountId)
+        {
+            // 1. 查找所有与此用户相关的 finance 记录
+            var financeList = await _financeRepository.FindByConditionAsync(f => f.AccountId == accountId && f.FinanceType == "点单");
+
+            // 2. 如果没有记录，返回空的结果
+            if (!financeList.Any())
+            {
+                return new GetOrderResponseDto { Success = false, Msg = "没有历史订单", Response = Array.Empty<OrderItem>() };
+            }
+
+            // 创建一个 List 来存储所有的 OrderItem
+            var orderItemList = new List<OrderItem>();
+
+            // 3. 遍历所有找到的 finance 记录，获取订单、购物车和购物车项目
+            foreach (var finance in financeList)
+            {
+                // 通过 financeId 查找 orderInfo
+                var orderInfo = await _orderInfRepository.FindByConditionAsync(o => o.FinanceId == finance.FinanceId);
+                if (orderInfo == null || !orderInfo.Any())
+                {
+                    continue;
+                }
+
+                var order = orderInfo.FirstOrDefault();
+
+                // 通过 cartId 获取购物车信息
+                var cart = await _cartRepository.GetByIdAsync(order.CartId);
+
+                // 获取购物车中的所有项目
+                var cartItems = await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == cart.CartId);
+
+                // 组装 orderDishes 信息
+                var orderDishes = new List<OrderDish>();
+                foreach (var cartItem in cartItems)
+                {
+                    var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);  // 假设有 DishRepository 来获取菜品信息
+
+                    if (dish != null)
+                    {
+                        orderDishes.Add(new OrderDish{
+                            DishName = dish.DishName,
+                            Picture = dish.ImageUrl,
+                            Price = cartItem.Quantity * dish.Price, // 假设价格保存在 Dish 中
+                            Quantity = cartItem.Quantity
+                        });
+                    }
+                }
+                
+                var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
+                // 4. 构建 OrderItem
+                var orderItem = new OrderItem
+                {
+                    CusAddress =  deliverOrder != null? deliverOrder.CusAddress: "堂食",  // 获取客户地址
+                    DeliverOrDining = order.DeliverOrDining == "D",  // 处理外送或堂食
+                    DeliverStatus = deliverOrder !=null? deliverOrder.DeliverStatus:"堂食",  // 配送状态可以根据业务逻辑设置
+                    Money = finance.Price,
+                    OrderDishes = orderDishes,
+                    Remark = order.Remark ?? "no remark",
+                    Status = order.Status,
+                    Subsidy = order.Bonus,  // 补贴
+                    UpdatedTime = finance.FinanceDate.ToString("yyyy-MM-dd HH:mm:ss")
+                };
+
+                // 将 orderItem 添加到列表中
+                orderItemList.Add(orderItem);
+            }
+
+            // 5. 构建 GetOrderResponseDto，并将 OrderItem 列表转换为数组返回
+            return new GetOrderResponseDto
+            {
+                Success = true,
+                Msg = "成功获取历史订单",
+                Response = orderItemList.ToArray()  // 转换为数组
+            };
+        }
 
     }
 
