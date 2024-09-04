@@ -24,26 +24,40 @@ public class HomePageService : IHomePageService
 
     public async Task<List<object>> GetDishesAsync()
     {
-        // 加载默认静态图片的 byte[] 数据
-        //byte[] defaultPicture = await LoadDefaultPictureAsync();
+        DateTime today = DateTime.Today;
+        int daysToMonday = (int)today.DayOfWeek- (int)DayOfWeek.Monday;
+        DateTime monday = today.AddDays(-daysToMonday);
+        DateTime sunday = monday.AddDays(6);
 
-        // 从数据库中查询数据
-        var result = await (from dish in _dishRepository.GetAll()
-                            join weekmenu in _weekmenuRepository.GetAll()
-                            on dish.DishId equals weekmenu.DishId
-                            select new
-                            {
-                                dishName = dish.DishName,
-                                picture =  dish.ImageUrl,
-                                category = dish.Cate.CateName,
-                                sale = weekmenu.Sales,
-                                price = weekmenu.DisPrice > 0 ? weekmenu.DisPrice : dish.Price
-                            }).ToListAsync();
+        // 预计算日期值
+        var mondayDate = monday.Date;
+        var sundayDate = sunday.Date;
 
-        var finalResult = result.ToList<object>();
+        // 获取销量数据
+        var dishSales = await _weekmenuRepository.GetAll()
+            .Where(wm => wm.Week >= mondayDate && wm.Week <= sundayDate)
+            .GroupBy(wm => wm.DishId)
+            .Select(group => new {
+                DishId = group.Key,
+                WeekSales = group.Sum(wm => wm.Sales)
+            }).ToListAsync();
 
-        return finalResult;
+        // 转换为字典以提高访问效率
+         var salesDictionary = dishSales.ToDictionary(ds => ds.DishId, ds => ds.WeekSales);
+
+        // 根据有效的 DishId 查询相应的菜品
+         var result = await _dishRepository.GetAll()
+                             .Select(d => new {
+                                 dishName = d.DishName,
+                                 picture = d.ImageUrl,
+                                 category = d.Cate.CateName,
+                                 sale = salesDictionary.ContainsKey(d.DishId) ? salesDictionary[d.DishId] : 0,
+                                 price = d.Price,
+                             })
+                             .ToListAsync();
+        return result.Cast<object>().ToList();
     }
+
     public async Task<List<object>> GetThisWeekMenu()
     {
 /*        // 加载默认静态图片的 byte[] 数据
