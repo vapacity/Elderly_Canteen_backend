@@ -376,6 +376,13 @@ namespace Elderly_Canteen.Services.Implements
 
             if (!string.IsNullOrEmpty(personInfo.Email))
             {
+                var existingAdmin = await _adminRepository.GetAll()
+                     .FirstOrDefaultAsync(a => a.Email == personInfo.Email && a.AccountId != accountId);
+
+                if (existingAdmin != null)
+                {
+                    throw new InvalidOperationException("邮箱已被占用");
+                }
                 admin.Email = personInfo.Email;
             }
 
