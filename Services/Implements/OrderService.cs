@@ -206,7 +206,7 @@
                 {
                     CusAddress = account.Address, // 根据业务逻辑填充
                     DeliverOrDining = deliver_or_dining,
-                    DeliverStatus = "待配送", // 初始配送状态
+                    DeliverStatus = deliver_or_dining?"待配送":"堂食", // 初始配送状态
                     Money = totalPrice,
                     OrderDishes = orderDishes,
                     Remark = order.Remark,

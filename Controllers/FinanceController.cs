@@ -34,7 +34,7 @@ namespace Elderly_Canteen.Controllers
             return NotFound(result);
         }
         [Authorize]
-        [HttpPost("/financial-records/{id}/status")]
+        [HttpPost("financial-records/{id}/status")]
         public async Task<IActionResult> AuditFinance(string id,[FromBody] AuditFinanceRequest request)
         {
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
