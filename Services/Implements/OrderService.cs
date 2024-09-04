@@ -231,8 +231,9 @@
                     CusAddress = address,
                     DeliverStatus = "未接单"
                 };
-                await _deliverOrderRepository.AddAsync(newOrder);
+                
 
+                await _deliverOrderRepository.AddAsync(newOrder);
             }
             // 5. 创建并返回 OrderInfoDto
             var orderInfoDto = new OrderInfoDto
@@ -311,25 +312,29 @@
                 // 获取购物车中的所有项目
                 var cartItems = await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == cart.CartId);
 
+                
+
                 // 组装 orderDishes 信息
                 var orderDishes = new List<OrderDish>();
                 foreach (var cartItem in cartItems)
                 {
                     var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);  // 假设有 DishRepository 来获取菜品信息
-
+                    var week = cartItem.Week;
+                    var disPrice =(await _weekMenuRepository.FindByCompositeKeyAsync<Weekmenu>(cartItem.DishId, week)).DisPrice;
                     if (dish != null)
                     {
                         orderDishes.Add(new OrderDish
                         {
                             DishName = dish.DishName,
                             Picture = dish.ImageUrl,
-                            Price = cartItem.Quantity * dish.Price, // 假设价格保存在 Dish 中
+                            Price = disPrice==0?dish.Price:disPrice, // 假设价格保存在 Dish 中
                             Quantity = cartItem.Quantity
                         });
                     }
                 }
 
                 var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
+
                 // 4. 构建 OrderItem
                 var orderItem = new OrderItem
                 {
@@ -348,7 +353,7 @@
                 // 将 orderItem 添加到列表中
                 orderItemList.Add(orderItem);
             }
-
+            
             // 5. 构建 GetOrderResponseDto，并将 OrderItem 列表转换为数组返回
             return new GetOrderResponseDto
             {
