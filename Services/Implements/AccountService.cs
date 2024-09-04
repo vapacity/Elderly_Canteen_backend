@@ -638,10 +638,6 @@ namespace Elderly_Canteen.Services.Implements
         }
 
 
-
-
-
-
         //以下为辅助用工具函数，我建议另写一个tools类来存放所有的工具函数，暂时感觉必要性不大，很难复用
         private string GenerateJwtToken(Account account)
         {
@@ -748,5 +744,27 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
+        //充值
+        public async Task<dynamic> CreditAccount(string id,decimal money)
+        {
+            var account = await _accountRepository.GetByIdAsync(id);
+
+            if ((account.Money+money)>=3000)
+            {
+                return new
+                {
+                    success = false,
+                    msg = "账户余额已达最大限制！"
+                };
+            }
+
+            account.Money += money;
+            await _accountRepository.UpdateAsync(account);
+            return new
+            {
+                success = true,
+                msg = $"充值成功，当前账户余额{account.Money}"
+            };
+        }
     }
 }
