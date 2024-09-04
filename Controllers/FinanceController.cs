@@ -51,6 +51,16 @@ namespace Elderly_Canteen.Controllers
         {
             public string Status { get; set; }
         }
+        [HttpGet("getTotal")]
+        public async Task<IActionResult> GetTotalFinanceInfo()
+        {
+            var result = await _financeService.GetTotalFinanceInfo();
+            if (!result.success)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
 
     }
    
