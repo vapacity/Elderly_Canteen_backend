@@ -6,7 +6,7 @@ namespace Elderly_Canteen.Services.Interfaces
     public interface IFinanceService
     {
         //获取财务列表
-        Task<FinanceResponseDto> GetFilteredFinanceInfoAsync(string? financeType = null, string inOrOut = null, string financeDate = null, string financeId = null, string accountId = null);
+        Task<FinanceResponseDto> GetFilteredFinanceInfoAsync(string? financeType = null, string inOrOut = null, string financeDate = null, string financeId = null, string accountId = null,string status=null);
         //更新审核状态
         Task<FinanceResponseDto> UpdateFinanceStatusAsync(string financeId, string status, string administratorId);
         Task<object> DeductBalanceAsync(string accountId, decimal amount);

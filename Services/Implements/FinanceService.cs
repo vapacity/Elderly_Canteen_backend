@@ -21,7 +21,7 @@ namespace Elderly_Canteen.Services.Implements
             _seniorRepository = seniorRepository;
         }
         //获取所有财务信息
-        public async Task<FinanceResponseDto> GetFilteredFinanceInfoAsync(string financeType = null, string inOrOut = null, string financeDate = null, string financeId = null, string accountId = null)
+        public async Task<FinanceResponseDto> GetFilteredFinanceInfoAsync(string financeType = null, string inOrOut = null, string financeDate = null, string financeId = null, string accountId = null,string status=null)
         {
             var query = _financeRepository.GetAll();
 
@@ -40,8 +40,30 @@ namespace Elderly_Canteen.Services.Implements
                 DateTime date;
                 if (DateTime.TryParse(financeDate, out date))
                 {
-                    query = query.Where(f => f.FinanceDate == date.Date);
+                    // 检查用户输入是否包含了时间部分
+                    if (date.TimeOfDay > TimeSpan.Zero)
+                    {
+                        // 用户提供了具体时间，查询这一精确时刻
+                        query = query.Where(f => f.FinanceDate == date);
+                    }
+                    else
+                    {
+                        // 用户没有提供时间，只提供了日期，仍然覆盖整天
+                        DateTime startDate = date;
+                        DateTime endDate = startDate.AddDays(1).AddTicks(-1);
+                        query = query.Where(f => f.FinanceDate >= startDate && f.FinanceDate <= endDate);
+                    }
                 }
+                else
+                {
+                    // 输入的日期时间字符串无法解析，返回错误或者默认行为
+                    return new FinanceResponseDto
+                    {
+                        success = false,
+                        msg = "日期格式不正确。请输入有效的日期时间字符串。"
+                    };
+                }
+                
             }
             if (!string.IsNullOrEmpty(financeId))
             {
@@ -50,6 +72,10 @@ namespace Elderly_Canteen.Services.Implements
             if (!string.IsNullOrEmpty(accountId))
             {
                 query = query.Where(f => f.AccountId == accountId);
+            }
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(f => f.Status == status);
             }
 
             var finances = await query.ToListAsync();

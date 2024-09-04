@@ -12,6 +12,7 @@ namespace Elderly_Canteen.Services.Interfaces
 
         Task<decimal> CalculateTotalPrice(List<CartItem> cartItems);
 
+
         // 返回历史所有订单
         Task<GetOrderResponseDto> GetHistoryOrderInfoAsync(string accountId);
 
@@ -19,7 +20,16 @@ namespace Elderly_Canteen.Services.Interfaces
 
         Task<GetOdMsgResponseDto> GetODMsg(string orderId);
 
+        Task<dynamic> SubmitDiningReviewAsync(ReviewSubmissionDto review);
+
+        Task<ReviewResponseDto> GetReviewByOrderId(string orderId);
+
+        Task<dynamic> SubmitDeliveringReviewAsync(ReviewSubmissionDto review);
+        Task<ReviewResponseDto> GetDeliveringReviewByOrderId(string orderId);
+
+
         Task<OrderInfoDto> GetOrderInfoByIdAsync(string orderId);
+
 
     }
 }

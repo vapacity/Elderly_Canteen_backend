@@ -4,19 +4,25 @@
     using Elderly_Canteen.Data.Repos;
     using Elderly_Canteen.Services.Interfaces;
     using Elderly_Canteen.Data.Dtos.Order;
-    public class OrderService : IOrderService
+    using Elderly_Canteen.Data.Dtos.EmployeeInfo;
+
+    public class OrderService:IOrderService
     {
         private readonly IGenericRepository<Weekmenu> _weekMenuRepository;
         private readonly IGenericRepository<Dish> _dishRepository;
         private readonly IGenericRepository<OrderInf> _orderInfRepository;
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IGenericRepository<Finance> _financeRepository;
+
         private readonly IGenericRepository<Cart> _cartRepository;
         private readonly IGenericRepository<CartItem> _cartItemRepository;
         private readonly IGenericRepository<DeliverOrder> _deliverOrderRepository;
         private readonly IGenericRepository<OrderReview> _orderReviewRepository;
-        private readonly IGenericRepository<DeliverV> _deliverVRepository;
+        private readonly IGenericRepository<DeliverV> _deliverVRepository;      
+        private readonly IGenericRepository<VolReview> _volReviewRepository;
         private readonly IGenericRepository<DeliverReview> _deliverReviewRepository;
+
+
 
 
         public OrderService(
@@ -25,6 +31,7 @@
             IGenericRepository<Finance> financeRepository,
             IGenericRepository<OrderInf> orderInfRepository,
             IGenericRepository<Account> accountRepository,
+
             IGenericRepository<Cart> cartRepository,
             IGenericRepository<CartItem> cartItemRepository,
             IGenericRepository<DeliverOrder> deliverOrderRepository,
@@ -37,12 +44,14 @@
             _financeRepository = financeRepository;
             _orderInfRepository = orderInfRepository;
             _accountRepository = accountRepository;
+
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _deliverOrderRepository = deliverOrderRepository;
             _orderReviewRepository = orderReviewRepository;
             _deliverVRepository = deliverVRepository;
             _deliverReviewRepository = deliverReviewRepository;
+
         }
         //计算当前周数
         private DateTime GetWeekStartDate()
@@ -534,7 +543,116 @@
                 Response = orderItem
             };
         }
+        //提交评价（堂食）
+        public async Task<dynamic> SubmitDiningReviewAsync(ReviewSubmissionDto review)
+        {
 
+            var order = await _orderInfRepository.GetByIdAsync(review.OrderId);
+            if (order == null)
+            {
+
+                return new 
+                {
+                    success = false,
+                    msg = $"订单ID为 {review.OrderId} 的订单不存在。",
+                };
+            }
+            var result = new OrderReview
+            {
+                OrderId = review.OrderId,
+                CReviewText = review.CReviewText,
+                CStars = review.CStars
+            };
+            
+
+            await _orderReviewRepository.AddAsync(result);
+            return new 
+            {
+                success = true,
+                msg = "订单评价已提交！",
+            };
+        }
+
+        //获取评价 （堂食）
+        public async Task<ReviewResponseDto> GetReviewByOrderId(string orderId)
+        {
+            var review= await _orderReviewRepository.GetByIdAsync(orderId);
+
+            // 假设数据库中已存有评价信息
+            return new ReviewResponseDto
+            {
+                success = true,
+                msg = "获取评价成功！",
+                response = new List<ReviewResponseData>
+                {
+                    new ReviewResponseData
+                    {
+                        CStars=(decimal)review.CStars,
+                        CReviewText=review.CReviewText
+                    }
+                }
+            };
+        }
+
+        //提交评价（外卖）
+        public async Task<dynamic> SubmitDeliveringReviewAsync(ReviewSubmissionDto review)
+        {
+
+            var order = await _orderInfRepository.GetByIdAsync(review.OrderId);
+            if (order == null)
+            {
+
+                return new
+                {
+                    success = false,
+                    msg = $"订单ID为 {review.OrderId} 的订单不存在。",
+                };
+            }
+            var result = new OrderReview
+            {
+                OrderId = review.OrderId,
+                CReviewText = review.CReviewText,
+                CStars = review.CStars
+            };
+            var result1 = new DeliverReview
+            {
+                OrderId = review.OrderId,
+                DReviewText = review.DReviewText,
+                DStars = review.DStars
+            };
+
+            await _orderReviewRepository.AddAsync(result);
+            await _deliverReviewRepository.AddAsync(result1);
+            return new
+            {
+                success = true,
+                msg = "评价已提交！",
+            };
+        }
+
+        //获取评价 （堂食）
+        public async Task<ReviewResponseDto> GetDeliveringReviewByOrderId(string orderId)
+        {
+            var review = await _orderReviewRepository.GetByIdAsync(orderId);
+            var review1 = await _deliverReviewRepository.GetByIdAsync(orderId);
+
+            // 假设数据库中已存有评价信息
+            return new ReviewResponseDto
+            {
+                success = true,
+                msg = "获取评价成功！",
+                response = new List<ReviewResponseData>
+                {
+                    new ReviewResponseData
+                    {
+                        CStars=(decimal)review.CStars,
+                        CReviewText=review.CReviewText,
+                        DStars=(decimal)review1.DStars,
+                        DReviewText=review1.DReviewText
+                    }
+                }
+            };
+        }
     }
 }
 

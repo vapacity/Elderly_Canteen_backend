@@ -17,7 +17,7 @@ namespace Elderly_Canteen.Controllers
             _financeService = financeService;
         }
         [HttpGet("financial-records")]
-        public async Task<IActionResult> GetFinances([FromQuery] string financeType = null,[FromQuery] string inOrOut = null,[FromQuery] string financeDate = null,[FromQuery] string financeId = null,[FromQuery] string accountId = null)
+        public async Task<IActionResult> GetFinances([FromQuery] string financeType = null,[FromQuery] string inOrOut = null,[FromQuery] string financeDate = null,[FromQuery] string financeId = null,[FromQuery] string accountId = null,[FromQuery] string status = null)
         {
             // 传递可能为空或默认值的参数
             var result = await _financeService.GetFilteredFinanceInfoAsync(
@@ -25,7 +25,8 @@ namespace Elderly_Canteen.Controllers
                 inOrOut: inOrOut,
                 financeDate: financeDate,
                 financeId: financeId,
-                accountId: accountId);
+                accountId: accountId,
+                status:status);
 
             if (result.success)
             {
