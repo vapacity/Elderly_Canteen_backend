@@ -258,5 +258,28 @@ namespace Elderly_Canteen.Controllers
                 msg = "注销账号时发生错误",
             });
         }
+
+        [Authorize]
+        [HttpPost("prePaid")]
+        public async Task<IActionResult> CreditAccount([FromBody] decimal money)
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            try
+            {
+                var result = await _accountService.CreditAccount(accountId,money);
+                if (result.success)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

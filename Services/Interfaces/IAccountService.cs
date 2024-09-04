@@ -38,5 +38,6 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<GetOTPResponseDto> SendOTPAsync(GetOTPRequestDto request);
         Task<PhoneResponseDto> ChangePhone(PhoneRequestDto request, string accountId);
         Task<bool> DeleteAccountAsync(string accountId);
+        Task<dynamic> CreditAccount(string id, decimal money);
     }
 }
