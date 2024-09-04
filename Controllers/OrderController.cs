@@ -69,5 +69,18 @@ namespace Elderly_Canteen.Controllers
             }
             return Ok(response);
         }
+
+        [HttpPost("getOrderMsg")]
+        public async Task<IActionResult> GetOrderMsg([FromQuery]string OrderId)
+        {
+            var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
+            if (response.Success == false)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+
     }
 }

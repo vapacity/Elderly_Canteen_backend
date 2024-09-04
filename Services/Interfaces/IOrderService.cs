@@ -18,5 +18,8 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<NormalResponseDto> ConfirmOrderAsync(string orderId,string accountId);
 
         Task<GetOdMsgResponseDto> GetODMsg(string orderId);
+
+        Task<OrderInfoDto> GetOrderInfoByIdAsync(string orderId);
+
     }
 }

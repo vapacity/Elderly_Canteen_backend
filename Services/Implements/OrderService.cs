@@ -16,6 +16,8 @@
         private readonly IGenericRepository<DeliverOrder> _deliverOrderRepository;
         private readonly IGenericRepository<OrderReview> _orderReviewRepository;
         private readonly IGenericRepository<DeliverV> _deliverVRepository;
+        private readonly IGenericRepository<DeliverReview> _deliverReviewRepository;
+
 
         public OrderService(
             IGenericRepository<Weekmenu> weekMenuRepository,
@@ -27,7 +29,8 @@
             IGenericRepository<CartItem> cartItemRepository,
             IGenericRepository<DeliverOrder> deliverOrderRepository,
             IGenericRepository<OrderReview> orderReviewRepository,
-            IGenericRepository<DeliverV> deliverVRepository)
+            IGenericRepository<DeliverV> deliverVRepository,
+            IGenericRepository<DeliverReview> deliverReviewRepository)
         {
             _weekMenuRepository = weekMenuRepository;
             _dishRepository = dishRepository;
@@ -39,6 +42,7 @@
             _deliverOrderRepository = deliverOrderRepository;
             _orderReviewRepository = orderReviewRepository;
             _deliverVRepository = deliverVRepository;
+            _deliverReviewRepository = deliverReviewRepository;
         }
         //计算当前周数
         private DateTime GetWeekStartDate()
@@ -389,6 +393,12 @@
                         };
                     }
                     deliverOrder.DeliverStatus = "已送达";
+                    var newDReview = new DeliverReview
+                    {
+                        OrderId = orderId,
+                        DReviewText = "无评价",
+                        DStars = 5
+                    };
                 }
 
                 return new NormalResponseDto
@@ -440,6 +450,86 @@
             };
 
         }
+
+        public async Task<OrderInfoDto> GetOrderInfoByIdAsync(string orderId)
+        {
+            // 1. 查找与此 orderId 相关的 orderInfo 记录
+            var orderInfo = await _orderInfRepository.FindByConditionAsync(o => o.OrderId == orderId);
+
+            // 2. 如果没有找到相关订单，返回错误消息
+            if (orderInfo == null || !orderInfo.Any())
+            {
+                return new OrderInfoDto { Success = false, Msg = "订单未找到", Response = null };
+            }
+
+            var order = orderInfo.FirstOrDefault();
+
+            // 3. 通过 cartId 获取购物车信息
+            var cart = await _cartRepository.GetByIdAsync(order.CartId);
+            if (cart == null)
+            {
+                return new OrderInfoDto { Success = false, Msg = "购物车信息未找到", Response = null };
+            }
+
+            // 4. 获取购物车中的所有项目
+            var cartItems = await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == cart.CartId);
+            if (cartItems == null || !cartItems.Any())
+            {
+                return new OrderInfoDto { Success = false, Msg = "购物车无项目", Response = null };
+            }
+
+            // 5. 获取菜品详情
+            var orderDishes = new List<OrderDish>();
+            foreach (var cartItem in cartItems)
+            {
+                var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);
+                if (dish != null)
+                {
+                    orderDishes.Add(new OrderDish
+                    {
+                        DishName = dish.DishName,
+                        Picture = dish.ImageUrl,
+                        Price = cartItem.Quantity * dish.Price, // 假设 Dish 表中的价格为单价
+                        Quantity = cartItem.Quantity
+                    });
+                }
+            }
+
+            // 6. 获取配送信息
+            var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
+            var finance = await _financeRepository.GetByIdAsync(order.FinanceId);
+            if (finance == null)
+            {
+                return new OrderInfoDto
+                {
+                    Success = false,
+                    Msg = " 数据库错误，找不到finance"
+                };
+            }
+            // 7. 构建 OrderItem 并返回
+            var orderItem = new OrderItem
+            {
+                OrderId = order.OrderId,
+                CusAddress = deliverOrder != null ? deliverOrder.CusAddress : "堂食",
+                DeliverOrDining = order.DeliverOrDining == "D",
+                DeliverStatus = deliverOrder != null ? deliverOrder.DeliverStatus : "堂食",
+                Money = finance.Price,  // 假设总金额为总价加补贴
+                OrderDishes = orderDishes,
+                Remark = order.Remark ?? "无备注",
+                Status = order.Status,
+                Subsidy = order.Bonus,  // 补贴
+                UpdatedTime =finance.FinanceDate.ToString("yyyy-MM-dd HH:mm:ss")
+            };
+
+            // 8. 返回结果
+            return new OrderInfoDto
+            {
+                Success = true,
+                Msg = "订单获取成功",
+                Response = orderItem
+            };
+        }
+
     }
 }
 
