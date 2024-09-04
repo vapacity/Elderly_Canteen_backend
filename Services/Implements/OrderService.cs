@@ -4,30 +4,26 @@
     using Elderly_Canteen.Data.Repos;
     using Elderly_Canteen.Services.Interfaces;
     using Elderly_Canteen.Data.Dtos.Order;
-<<<<<<< Updated upstream
-    public class OrderService : IOrderService
-=======
     using Elderly_Canteen.Data.Dtos.EmployeeInfo;
 
     public class OrderService:IOrderService
->>>>>>> Stashed changes
     {
         private readonly IGenericRepository<Weekmenu> _weekMenuRepository;
         private readonly IGenericRepository<Dish> _dishRepository;
         private readonly IGenericRepository<OrderInf> _orderInfRepository;
         private readonly IGenericRepository<Account> _accountRepository;
         private readonly IGenericRepository<Finance> _financeRepository;
-<<<<<<< Updated upstream
+
         private readonly IGenericRepository<Cart> _cartRepository;
         private readonly IGenericRepository<CartItem> _cartItemRepository;
         private readonly IGenericRepository<DeliverOrder> _deliverOrderRepository;
         private readonly IGenericRepository<OrderReview> _orderReviewRepository;
-        private readonly IGenericRepository<DeliverV> _deliverVRepository;
-=======
-        private readonly IGenericRepository<OrderReview> _orderReviewRepository;
+        private readonly IGenericRepository<DeliverV> _deliverVRepository;      
         private readonly IGenericRepository<VolReview> _volReviewRepository;
         private readonly IGenericRepository<DeliverReview> _deliverReviewRepository;
->>>>>>> Stashed changes
+
+
+
 
         public OrderService(
             IGenericRepository<Weekmenu> weekMenuRepository,
@@ -35,33 +31,27 @@
             IGenericRepository<Finance> financeRepository,
             IGenericRepository<OrderInf> orderInfRepository,
             IGenericRepository<Account> accountRepository,
-<<<<<<< Updated upstream
+
             IGenericRepository<Cart> cartRepository,
             IGenericRepository<CartItem> cartItemRepository,
             IGenericRepository<DeliverOrder> deliverOrderRepository,
             IGenericRepository<OrderReview> orderReviewRepository,
-            IGenericRepository<DeliverV> deliverVRepository)
-=======
-            IGenericRepository<OrderReview> orderReviewRepository,
-            IGenericRepository<DeliverReview> deliverReviewRepository
-            )
->>>>>>> Stashed changes
+            IGenericRepository<DeliverV> deliverVRepository,
+            IGenericRepository<DeliverReview> deliverReviewRepository)
         {
             _weekMenuRepository = weekMenuRepository;
             _dishRepository = dishRepository;
             _financeRepository = financeRepository;
             _orderInfRepository = orderInfRepository;
             _accountRepository = accountRepository;
-<<<<<<< Updated upstream
+
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _deliverOrderRepository = deliverOrderRepository;
             _orderReviewRepository = orderReviewRepository;
             _deliverVRepository = deliverVRepository;
-=======
-            _orderReviewRepository = orderReviewRepository;
             _deliverReviewRepository = deliverReviewRepository;
->>>>>>> Stashed changes
+
         }
         //计算当前周数
         private DateTime GetWeekStartDate()
@@ -250,8 +240,9 @@
                     CusAddress = address,
                     DeliverStatus = "未接单"
                 };
-                await _deliverOrderRepository.AddAsync(newOrder);
+                
 
+                await _deliverOrderRepository.AddAsync(newOrder);
             }
             // 5. 创建并返回 OrderInfoDto
             var orderInfoDto = new OrderInfoDto
@@ -298,12 +289,260 @@
         }
         // 3. 返回订单信息
 
-<<<<<<< Updated upstream
         public async Task<GetOrderResponseDto> GetHistoryOrderInfoAsync(string accountId)
         {
             // 1. 查找所有与此用户相关的 finance 记录
             var financeList = await _financeRepository.FindByConditionAsync(f => f.AccountId == accountId && f.FinanceType == "点单");
-=======
+
+            // 2. 如果没有记录，返回空的结果
+            if (!financeList.Any())
+            {
+                return new GetOrderResponseDto { Success = false, Msg = "没有历史订单", Response = Array.Empty<OrderItem>() };
+            }
+
+            // 创建一个 List 来存储所有的 OrderItem
+            var orderItemList = new List<OrderItem>();
+
+            // 3. 遍历所有找到的 finance 记录，获取订单、购物车和购物车项目
+            foreach (var finance in financeList)
+            {
+                // 通过 financeId 查找 orderInfo
+                var orderInfo = await _orderInfRepository.FindByConditionAsync(o => o.FinanceId == finance.FinanceId);
+                if (orderInfo == null || !orderInfo.Any())
+                {
+                    continue;
+                }
+
+                var order = orderInfo.FirstOrDefault();
+
+                // 通过 cartId 获取购物车信息
+                var cart = await _cartRepository.GetByIdAsync(order.CartId);
+
+                // 获取购物车中的所有项目
+                var cartItems = await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == cart.CartId);
+
+                
+
+                // 组装 orderDishes 信息
+                var orderDishes = new List<OrderDish>();
+                foreach (var cartItem in cartItems)
+                {
+                    var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);  // 假设有 DishRepository 来获取菜品信息
+                    var week = cartItem.Week;
+                    var disPrice =(await _weekMenuRepository.FindByCompositeKeyAsync<Weekmenu>(cartItem.DishId, week)).DisPrice;
+                    if (dish != null)
+                    {
+                        orderDishes.Add(new OrderDish
+                        {
+                            DishName = dish.DishName,
+                            Picture = dish.ImageUrl,
+                            Price = disPrice==0?dish.Price:disPrice, // 假设价格保存在 Dish 中
+                            Quantity = cartItem.Quantity
+                        });
+                    }
+                }
+
+                var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
+
+                // 4. 构建 OrderItem
+                var orderItem = new OrderItem
+                {
+                    OrderId = order.OrderId,
+                    CusAddress = deliverOrder != null ? deliverOrder.CusAddress : "堂食",  // 获取客户地址
+                    DeliverOrDining = order.DeliverOrDining == "D",  // 处理外送或堂食
+                    DeliverStatus = deliverOrder != null ? deliverOrder.DeliverStatus : "堂食",  // 配送状态可以根据业务逻辑设置
+                    Money = finance.Price,
+                    OrderDishes = orderDishes,
+                    Remark = order.Remark ?? "no remark",
+                    Status = order.Status,
+                    Subsidy = order.Bonus,  // 补贴
+                    UpdatedTime = finance.FinanceDate.ToString("yyyy-MM-dd HH:mm:ss")
+                };
+
+                // 将 orderItem 添加到列表中
+                orderItemList.Add(orderItem);
+            }
+            
+            // 5. 构建 GetOrderResponseDto，并将 OrderItem 列表转换为数组返回
+            return new GetOrderResponseDto
+            {
+                Success = true,
+                Msg = "成功获取历史订单",
+                Response = orderItemList.ToArray()  // 转换为数组
+            };
+        }
+
+        public async Task<NormalResponseDto> ConfirmOrderAsync(string orderId, string accountId)
+        {
+            try
+            {
+                var order = await _orderInfRepository.GetByIdAsync(orderId);
+                if (order == null)
+                {
+                    return new NormalResponseDto
+                    {
+                        Success = false,
+                        Message = "orderId 不存在关联订单"
+                    };
+                }
+                order.Status = "已确认";
+                var newReview = new OrderReview
+                {
+                    OrderId = orderId,
+                    CStars = 5,
+                    CReviewText = "无评价"
+                };
+                await _orderReviewRepository.AddAsync(newReview);
+
+                await _orderInfRepository.UpdateAsync(order);
+                if (order.DeliverOrDining == "D")
+                {
+                    var deliverOrder = await _deliverOrderRepository.GetByIdAsync(orderId);
+                    if (deliverOrder == null)
+                    {
+                        return new NormalResponseDto
+                        {
+                            Success = false,
+                            Message = "数据库错误，存在不一致"
+                        };
+                    }
+                    deliverOrder.DeliverStatus = "已送达";
+                    var newDReview = new DeliverReview
+                    {
+                        OrderId = orderId,
+                        DReviewText = "无评价",
+                        DStars = 5
+                    };
+                }
+
+                return new NormalResponseDto
+                {
+                    Success = true,
+                    Message = "修改成功"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new NormalResponseDto
+                {
+                    Success = false,
+                    Message = ex.Message,
+                };
+            }
+        }
+        public async Task<GetOdMsgResponseDto> GetODMsg(string orderId)
+        {
+            var volun = await _deliverVRepository.GetByIdAsync(orderId);
+            if (volun == null)
+            {
+                return new GetOdMsgResponseDto
+                {
+                    Success = false,
+                    Msg = "没有志愿者接单"
+                };
+            }
+            var volAccount = await _accountRepository.GetByIdAsync(volun.OrderId);
+            if (volAccount == null)
+            {
+                return new GetOdMsgResponseDto
+                {
+                    Success = false,
+                    Msg = "数据库错误，志愿者id存在但志愿者账户不存在"
+                };
+
+            }
+
+            return new GetOdMsgResponseDto
+            {
+                Success = true,
+                Msg = "success",
+                Response = new VolunteerMsg
+                {
+                    VolunteerId = volun.OrderId,
+                    VolunteerName = volAccount.Name
+                }
+            };
+
+        }
+
+        public async Task<OrderInfoDto> GetOrderInfoByIdAsync(string orderId)
+        {
+            // 1. 查找与此 orderId 相关的 orderInfo 记录
+            var orderInfo = await _orderInfRepository.FindByConditionAsync(o => o.OrderId == orderId);
+
+            // 2. 如果没有找到相关订单，返回错误消息
+            if (orderInfo == null || !orderInfo.Any())
+            {
+                return new OrderInfoDto { Success = false, Msg = "订单未找到", Response = null };
+            }
+
+            var order = orderInfo.FirstOrDefault();
+
+            // 3. 通过 cartId 获取购物车信息
+            var cart = await _cartRepository.GetByIdAsync(order.CartId);
+            if (cart == null)
+            {
+                return new OrderInfoDto { Success = false, Msg = "购物车信息未找到", Response = null };
+            }
+
+            // 4. 获取购物车中的所有项目
+            var cartItems = await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == cart.CartId);
+            if (cartItems == null || !cartItems.Any())
+            {
+                return new OrderInfoDto { Success = false, Msg = "购物车无项目", Response = null };
+            }
+
+            // 5. 获取菜品详情
+            var orderDishes = new List<OrderDish>();
+            foreach (var cartItem in cartItems)
+            {
+                var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);
+                if (dish != null)
+                {
+                    orderDishes.Add(new OrderDish
+                    {
+                        DishName = dish.DishName,
+                        Picture = dish.ImageUrl,
+                        Price = cartItem.Quantity * dish.Price, // 假设 Dish 表中的价格为单价
+                        Quantity = cartItem.Quantity
+                    });
+                }
+            }
+
+            // 6. 获取配送信息
+            var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
+            var finance = await _financeRepository.GetByIdAsync(order.FinanceId);
+            if (finance == null)
+            {
+                return new OrderInfoDto
+                {
+                    Success = false,
+                    Msg = " 数据库错误，找不到finance"
+                };
+            }
+            // 7. 构建 OrderItem 并返回
+            var orderItem = new OrderItem
+            {
+                OrderId = order.OrderId,
+                CusAddress = deliverOrder != null ? deliverOrder.CusAddress : "堂食",
+                DeliverOrDining = order.DeliverOrDining == "D",
+                DeliverStatus = deliverOrder != null ? deliverOrder.DeliverStatus : "堂食",
+                Money = finance.Price,  // 假设总金额为总价加补贴
+                OrderDishes = orderDishes,
+                Remark = order.Remark ?? "无备注",
+                Status = order.Status,
+                Subsidy = order.Bonus,  // 补贴
+                UpdatedTime =finance.FinanceDate.ToString("yyyy-MM-dd HH:mm:ss")
+            };
+
+            // 8. 返回结果
+            return new OrderInfoDto
+            {
+                Success = true,
+                Msg = "订单获取成功",
+                Response = orderItem
+            };
+        }
         //提交评价（堂食）
         public async Task<dynamic> SubmitDiningReviewAsync(ReviewSubmissionDto review)
         {
@@ -413,171 +652,6 @@
                     }
                 }
             };
-        }
-
-
-    }
->>>>>>> Stashed changes
-
-            // 2. 如果没有记录，返回空的结果
-            if (!financeList.Any())
-            {
-                return new GetOrderResponseDto { Success = false, Msg = "没有历史订单", Response = Array.Empty<OrderItem>() };
-            }
-
-            // 创建一个 List 来存储所有的 OrderItem
-            var orderItemList = new List<OrderItem>();
-
-            // 3. 遍历所有找到的 finance 记录，获取订单、购物车和购物车项目
-            foreach (var finance in financeList)
-            {
-                // 通过 financeId 查找 orderInfo
-                var orderInfo = await _orderInfRepository.FindByConditionAsync(o => o.FinanceId == finance.FinanceId);
-                if (orderInfo == null || !orderInfo.Any())
-                {
-                    continue;
-                }
-
-                var order = orderInfo.FirstOrDefault();
-
-                // 通过 cartId 获取购物车信息
-                var cart = await _cartRepository.GetByIdAsync(order.CartId);
-
-                // 获取购物车中的所有项目
-                var cartItems = await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == cart.CartId);
-
-                // 组装 orderDishes 信息
-                var orderDishes = new List<OrderDish>();
-                foreach (var cartItem in cartItems)
-                {
-                    var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);  // 假设有 DishRepository 来获取菜品信息
-
-                    if (dish != null)
-                    {
-                        orderDishes.Add(new OrderDish
-                        {
-                            DishName = dish.DishName,
-                            Picture = dish.ImageUrl,
-                            Price = cartItem.Quantity * dish.Price, // 假设价格保存在 Dish 中
-                            Quantity = cartItem.Quantity
-                        });
-                    }
-                }
-
-                var deliverOrder = await _deliverOrderRepository.GetByIdAsync(order.OrderId);
-                // 4. 构建 OrderItem
-                var orderItem = new OrderItem
-                {
-                    OrderId = order.OrderId,
-                    CusAddress = deliverOrder != null ? deliverOrder.CusAddress : "堂食",  // 获取客户地址
-                    DeliverOrDining = order.DeliverOrDining == "D",  // 处理外送或堂食
-                    DeliverStatus = deliverOrder != null ? deliverOrder.DeliverStatus : "堂食",  // 配送状态可以根据业务逻辑设置
-                    Money = finance.Price,
-                    OrderDishes = orderDishes,
-                    Remark = order.Remark ?? "no remark",
-                    Status = order.Status,
-                    Subsidy = order.Bonus,  // 补贴
-                    UpdatedTime = finance.FinanceDate.ToString("yyyy-MM-dd HH:mm:ss")
-                };
-
-                // 将 orderItem 添加到列表中
-                orderItemList.Add(orderItem);
-            }
-
-            // 5. 构建 GetOrderResponseDto，并将 OrderItem 列表转换为数组返回
-            return new GetOrderResponseDto
-            {
-                Success = true,
-                Msg = "成功获取历史订单",
-                Response = orderItemList.ToArray()  // 转换为数组
-            };
-        }
-
-        public async Task<NormalResponseDto> ConfirmOrderAsync(string orderId, string accountId)
-        {
-            try
-            {
-                var order = await _orderInfRepository.GetByIdAsync(orderId);
-                if (order == null)
-                {
-                    return new NormalResponseDto
-                    {
-                        Success = false,
-                        Message = "orderId 不存在关联订单"
-                    };
-                }
-                order.Status = "已确认";
-                var newReview = new OrderReview
-                {
-                    OrderId = orderId,
-                    CStars = 5,
-                    CReviewText = "无评价"
-                };
-                await _orderReviewRepository.AddAsync(newReview);
-
-                await _orderInfRepository.UpdateAsync(order);
-                if (order.DeliverOrDining == "D")
-                {
-                    var deliverOrder = await _deliverOrderRepository.GetByIdAsync(orderId);
-                    if (deliverOrder == null)
-                    {
-                        return new NormalResponseDto
-                        {
-                            Success = false,
-                            Message = "数据库错误，存在不一致"
-                        };
-                    }
-                    deliverOrder.DeliverStatus = "已送达";
-                }
-
-                return new NormalResponseDto
-                {
-                    Success = true,
-                    Message = "修改成功"
-                };
-            }
-            catch (Exception ex)
-            {
-                return new NormalResponseDto
-                {
-                    Success = false,
-                    Message = ex.Message,
-                };
-            }
-        }
-        public async Task<GetOdMsgResponseDto> GetODMsg(string orderId)
-        {
-            var volun = await _deliverVRepository.GetByIdAsync(orderId);
-            if (volun == null)
-            {
-                return new GetOdMsgResponseDto
-                {
-                    Success = false,
-                    Msg = "没有志愿者接单"
-                };
-            }
-            var volAccount = await _accountRepository.GetByIdAsync(volun.OrderId);
-            if (volAccount == null)
-            {
-                return new GetOdMsgResponseDto
-                {
-                    Success = false,
-                    Msg = "数据库错误，志愿者id存在但志愿者账户不存在"
-                };
-
-            }
-
-            return new GetOdMsgResponseDto
-            {
-                Success = true,
-                Msg = "success",
-                Response = new VolunteerMsg
-                {
-                    VolunteerId = volun.OrderId,
-                    VolunteerName = volAccount.Name
-                }
-            };
-
         }
     }
 }
