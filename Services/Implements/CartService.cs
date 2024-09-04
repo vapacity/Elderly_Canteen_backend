@@ -182,7 +182,7 @@ namespace Elderly_Canteen.Services.Implements
                         if (!orderInfo.Any())
                         {
                             // 如果购物车不在 orderInfo 中，则删除该购物车
-                            await _cartRepository.DeleteAsync(cart);
+                            await _cartRepository.DeleteAsync(cart.CartId);
 
                             // 返回成功消息
                             return new CartResponseDto

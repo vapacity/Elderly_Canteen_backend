@@ -58,13 +58,14 @@
 
             // 计算本周的周一日期
             DayOfWeek dayOfWeek = today.DayOfWeek;
-            int daysToMonday = (int)dayOfWeek - (int)DayOfWeek.Monday;
-            DateTime weekStartDate = today.AddDays(-daysToMonday).Date;
+            
+            // 获得当天日期
+            var todayDate = today.Date;
             // 将 DayOfWeek 映射为 Mon, Tue, Wed 等形式
             string dayString = MapDayOfWeekToShortString(dayOfWeek);
 
             // 查找符合条件的 WeekMenu 项目
-            var weekMenus = (await _weekMenuRepository.FindByConditionAsync(wm => wm.Week == weekStartDate && wm.Day == dayString)).ToList();
+            var weekMenus = (await _weekMenuRepository.FindByConditionAsync(wm => wm.Week == todayDate && wm.Day == dayString)).ToList();
 
             // 准备存放菜单信息的列表
             var menuList = new List<Menu>();
