@@ -20,6 +20,7 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<Administrator> _administratorRepository;
         private readonly IGenericRepository<Weekmenu> _weekMenuRepository;
         private readonly INotificationService _notificationService;
+        private readonly ModelContext _context;
 
         public RepoService(IGenericRepository<Repository> repoRepository, 
             IGenericRepository<Ingredient> ingreRepository, 
@@ -28,7 +29,8 @@ namespace Elderly_Canteen.Services.Implements
             IGenericRepository<Administrator> administratorRepository,
             IGenericRepository<Weekmenu> weekMenuRepository,
             IGenericRepository<Formula> formulaRepository,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        ModelContext context)
         {
             _repoRepository = repoRepository;
             _ingreRepository = ingreRepository;
@@ -38,6 +40,7 @@ namespace Elderly_Canteen.Services.Implements
             _weekMenuRepository = weekMenuRepository;
             _notificationService = notificationService;
             _formulaRepository = formulaRepository;
+            _context = context;
         }
 
         public async Task<AllRepoResponseDto> GetRepo(string? name)
@@ -486,6 +489,8 @@ namespace Elderly_Canteen.Services.Implements
                 _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), dayOfWeek, null)
             };
         }
+        
+        
         // 检查并减少库存逻辑
         public async Task<bool> CheckAndReduceStockAsync(string dishId, DateTime week, int quantity)
         {
@@ -493,10 +498,10 @@ namespace Elderly_Canteen.Services.Implements
             string today = MapDayOfWeekToShortString(DateTime.Now.DayOfWeek);
 
             // 2. 获取本周开始的日期
-            DateTime weekStart = week;
+            DateTime weekStar = week;
 
             // 3. 查找对应菜品在当前周和当天的库存记录
-            var wkmu = (await _weekMenuRepository.FindByConditionAsync(w => w.DishId == dishId && w.Week == weekStart && w.Day == today)).FirstOrDefault();
+            var wkmu = (await _weekMenuRepository.FindByConditionAsync(w => w.DishId == dishId && w.Week == week.Date && w.Day == today)).FirstOrDefault();
 
             // 4. 如果未找到记录，表示库存不足或无效
             if (wkmu == null)
@@ -529,81 +534,67 @@ namespace Elderly_Canteen.Services.Implements
             return true;
         }
 
-
-        // 每日库存补充逻辑
+        // 每天自动更新库存
         public async Task ReplenishDailyStockAsync()
         {
-            // 1. 获取当前周的周一日期
-            DateTime weekStartDate = GetWeekStartDate();
-            string today = MapDayOfWeekToShortString(DateTime.Now.DayOfWeek);
-
-            // 2. 获取所有当天的 WeekMenu 项目，并重置库存为 50
-            var weekMenus = await _weekMenuRepository.FindByConditionAsync(w => w.Week == weekStartDate && w.Day == today);
-            foreach (var weekMenu in weekMenus)
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                weekMenu.Stock = 50;
-
-                // 3. 检查是否有足够的食材库存来支持 50 份
-                var formulaItems = await _formulaRepository.FindByConditionAsync(f => f.DishId == weekMenu.DishId);
-                foreach (var formula in formulaItems)
+                try
                 {
-                    int requiredQuantity = 50 * formula.Amount; // 50 份需要的食材数量
-                    var ingredients = (await _repoRepository.FindByConditionAsync(r => r.IngredientId == formula.IngredientId))
-                                      .OrderBy(r => r.ExpirationTime) // 按保质期排序
-                                      .ToList();
+                    // 1. 获取当前周的周一日期
+                    DateTime weekStartDate = GetWeekStartDate();
+                    string today = MapDayOfWeekToShortString(DateTime.Now.DayOfWeek);
 
-                    int sumAmount = ingredients.Sum(i => i.RemainAmount);
+                    // 2. 获取所有当天的 WeekMenu 项目
+                    var weekMenus = await _weekMenuRepository.FindByConditionAsync(w => w.Week == DateTime.Now.Date && w.Day == today);
 
-                    if (ingredients == null || sumAmount < requiredQuantity)
+                    foreach (var weekMenu in weekMenus)
                     {
-                        throw new Exception($"库存不足，无法支持50份 {weekMenu.DishId}");
-                    }
-                }
-            }
+                        // 3. 检查是否有足够的食材库存来支持 50 份
+                        int maxPortions = await CalculateMaxPortionsAsync(weekMenu.DishId, 50);
 
-            foreach (var weekMenu in weekMenus)
-            {
-                await _weekMenuRepository.UpdateAsync(weekMenu);
-            }
-
-            // 5. 减少repository中的食材库存，并删除过期的食材
-            foreach (var weekMenu in weekMenus)
-            {
-                var formulaItems = await _formulaRepository.FindByConditionAsync(f => f.DishId == weekMenu.DishId);
-                foreach (var formula in formulaItems)
-                {
-                    int requiredQuantity = 50 * formula.Amount;
-
-                    var ingredients = (await _repoRepository.FindByConditionAsync(r => r.IngredientId == formula.IngredientId))
-                                      .OrderBy(r => r.ExpirationTime) // 按保质期排序
-                                      .ToList();
-
-                    foreach (var ingredient in ingredients)
-                    {
-                        if (ingredient.RemainAmount >= requiredQuantity)
+                        // 4. 如果库存不足，调整库存为能支持的最大份数
+                        if (maxPortions < 50)
                         {
-                            ingredient.RemainAmount -= requiredQuantity;
-                            requiredQuantity = 0;
+                            weekMenu.Stock = maxPortions;
+                            Console.WriteLine($"库存不足，{weekMenu.DishId} 的库存调整为 {maxPortions} 份");
                         }
                         else
                         {
-                            requiredQuantity -= ingredient.RemainAmount;
-                            ingredient.RemainAmount = 0;
+                            weekMenu.Stock = 50;
                         }
-
-                        // 如果食材已足够，无需继续减少
-                        if (requiredQuantity == 0)
-                            break;
                     }
 
-                    if (requiredQuantity > 0)
+                    // 5. 更新 WeekMenu 中的库存
+                    foreach (var weekMenu in weekMenus)
                     {
-                        throw new Exception($"库存减少失败，无法支持50份 {weekMenu.DishId}");
+                        await _weekMenuRepository.UpdateAsync(weekMenu);
                     }
+
+                    // 6. 减少 repository 中的食材库存
+                    foreach (var weekMenu in weekMenus)
+                    {
+                        bool success = await ReduceIngredientStockAsync(weekMenu.DishId, weekMenu.Stock);
+                        if (!success)
+                        {
+                            throw new Exception($"库存减少失败，无法支持 {weekMenu.Stock} 份 {weekMenu.DishId}");
+                        }
+                    }
+
+                    // 7. 提交事务
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    // 发生异常时回滚事务
+                    await transaction.RollbackAsync();
+                    Console.WriteLine($"发生错误: {ex.Message}");
+                    throw;
                 }
             }
         }
 
+        // 每天删除过期食材
         public async Task CheckAndRemoveExpiredIngredientsAsync()
         {
             
@@ -620,6 +611,98 @@ namespace Elderly_Canteen.Services.Implements
                     _notificationService.NotifyExpiringSoon(ingredient.IngredientId, ingredient.ExpirationTime);
                 }
             }
+        }
+
+        // 计算当前仓库 能够制作的最大份数
+        public async Task<int> CalculateMaxPortionsAsync(string dishId, int requestedQuantity = 50)
+        {
+            // 查询该菜品的配方信息
+            var formulaItems = await _formulaRepository.FindByConditionAsync(f => f.DishId == dishId);
+
+            // 初始化最大可制作份数为无限大（表示还未受任何食材限制）
+            int maxPortions = int.MaxValue;
+
+            // 遍历配方中的每种食材，计算每种食材能制作的最大份数
+            foreach (var formula in formulaItems)
+            {
+                // 计算制作 requestedQuantity 份菜品所需的食材总量
+                int requiredQuantity = requestedQuantity * formula.Amount;
+
+                // 查询该食材的库存，并按保质期排序
+                var ingredients = (await _repoRepository.FindByConditionAsync(r => r.IngredientId == formula.IngredientId))
+                                   .OrderBy(r => r.ExpirationTime)
+                                   .ToList();
+
+                // 计算该食材的总库存量
+                int sumAmount = ingredients.Sum(i => i.RemainAmount);
+
+                // 如果库存不足，计算当前库存能制作的最大份数
+                if (sumAmount < requiredQuantity)
+                {
+                    // 当前库存能支持的最大份数
+                    int possiblePortions = sumAmount / formula.Amount;
+
+                    // 更新最大可制作份数
+                    maxPortions = Math.Min(maxPortions, possiblePortions);
+                }
+            }
+
+            // 如果 maxPortions 被限制为一个较小的值，则更新 requestedQuantity
+            if (maxPortions < requestedQuantity)
+            {
+                requestedQuantity = maxPortions;
+                Console.WriteLine($"库存不足，最多可制作 {maxPortions} 份 {dishId}");
+            }
+
+            return maxPortions;
+        }
+
+        // 根据输入减少库存量
+        public async Task<bool> ReduceIngredientStockAsync(string dishId, int requiredQuantity)
+        {
+            // 获取配方信息
+            var formulaItems = await _formulaRepository.FindByConditionAsync(f => f.DishId == dishId);
+
+            // 遍历配方中的每种食材，减少库存
+            foreach (var formula in formulaItems)
+            {
+                int totalRequiredQuantity = requiredQuantity * formula.Amount;
+
+                // 获取对应食材的库存，并按保质期排序
+                var ingredients = (await _repoRepository.FindByConditionAsync(r => r.IngredientId == formula.IngredientId))
+                                  .OrderBy(r => r.ExpirationTime)
+                                  .ToList();
+
+                foreach (var ingredient in ingredients)
+                {
+                    if (ingredient.RemainAmount >= totalRequiredQuantity)
+                    {
+                        ingredient.RemainAmount -= totalRequiredQuantity;
+                        totalRequiredQuantity = 0;
+                    }
+                    else
+                    {
+                        totalRequiredQuantity -= ingredient.RemainAmount;
+                        ingredient.RemainAmount = 0;
+                    }
+
+                    // 更新食材库存
+                    await _repoRepository.UpdateAsync(ingredient);
+
+                    // 如果食材已足够，无需继续减少
+                    if (totalRequiredQuantity == 0)
+                        break;
+                }
+
+                if (totalRequiredQuantity > 0)
+                {
+                    // 库存不足，无法满足需求
+                    return false;
+                }
+            }
+
+            // 库存成功减少
+            return true;
         }
 
 

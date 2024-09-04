@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Elderly_Canteen.Data.Dtos.Finance;
 
 public class FinanceService : IFinanceService
+
+namespace Elderly_Canteen.Services.Implements
 {
     private readonly IGenericRepository<Account> _accountRepository;
     private readonly IGenericRepository<Senior> _seniorRepository;

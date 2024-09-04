@@ -18,5 +18,12 @@ namespace Elderly_Canteen.Services.Interfaces
         Task CheckAndRemoveExpiredIngredientsAsync();
         // 每日自动库存补货
         Task ReplenishDailyStockAsync();
+
+        // 减少食材数量
+        // 输入dishId 和 减少数量可以直接减少食材
+        Task<bool> ReduceIngredientStockAsync(string dishId, int requiredQuantity);
+
+        // 计算当前能制作的dish的最大份数
+        Task<int> CalculateMaxPortionsAsync(string dishId, int requestedQuantity = 50);
     }
 }

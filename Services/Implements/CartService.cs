@@ -259,12 +259,9 @@ namespace Elderly_Canteen.Services.Implements
                 // 2. 验证 DishId 是否在今日菜单中
                 DateTime today = DateTime.Now;
                 DayOfWeek dayOfWeek = today.DayOfWeek;
-                int daysToMonday = (int)dayOfWeek - (int)DayOfWeek.Monday;
-                DateTime weekStartDate = today.AddDays(-daysToMonday).Date;
-                string dayString = MapDayOfWeekToShortString(dayOfWeek);
-
+                var weekDate = today.Date;
                 var weekMenu = (await _weekMenuRepository
-                    .FindByConditionAsync(wm => wm.Week == weekStartDate && wm.Day == dayString && wm.DishId == dto.DishId))
+                    .FindByConditionAsync(wm => wm.Week.Date == weekDate && wm.DishId == dto.DishId))
                     .FirstOrDefault();
 
                 if (weekMenu == null)
@@ -290,7 +287,7 @@ namespace Elderly_Canteen.Services.Implements
                     {
                         CartId = dto.CartId,
                         DishId = dto.DishId,
-                        Week = weekStartDate,
+                        Week = weekDate,
                         Quantity = (int)dto.Quantity
                     };
                     await _cartItemRepository.AddAsync(cartItem);
@@ -315,14 +312,6 @@ namespace Elderly_Canteen.Services.Implements
                 return new CartItemResponseDto { Success = false, Message = $"更新购物车项时发生错误: {ex.Message}" };
             }
         }
-        private DateTime GetWeekStartDate()
-        {
-            DateTime today = DateTime.Now;
-            DayOfWeek dayOfWeek = today.DayOfWeek;
-            int daysToMonday = (int)dayOfWeek - (int)DayOfWeek.Monday;
-            DateTime weekStartDate = today.AddDays(-daysToMonday).Date; // 获取本周的周一
-            return weekStartDate;
-        }
         public async Task<CartItemResponseDto> DeleteCartItem(DeleteRequestDto dto, string accountId)
         {
             try
@@ -340,8 +329,8 @@ namespace Elderly_Canteen.Services.Implements
                 }
 
                 // 2. 验证 DishId 是否存在于购物车项中
-                var weekStartDate = GetWeekStartDate(); // 获取当前周的周一日期，作为 Week 的值
-                var cartItem = (await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == dto.CartId && ci.DishId == dto.DishId && ci.Week == weekStartDate)).FirstOrDefault();
+                var weekDate = DateTime.Today.Date; // 获取当前周的周一日期，作为 Week 的值
+                var cartItem = (await _cartItemRepository.FindByConditionAsync(ci => ci.CartId == dto.CartId && ci.DishId == dto.DishId && ci.Week == weekDate)).FirstOrDefault();
 
                 if (cartItem == null)
                 {
@@ -353,7 +342,7 @@ namespace Elderly_Canteen.Services.Implements
                 }
 
                 // 3. 使用复合主键删除购物车项
-                await _cartItemRepository.DeleteByCompositeKeyAsync<CartItem>(dto.CartId, dto.DishId, weekStartDate);
+                await _cartItemRepository.DeleteByCompositeKeyAsync<CartItem>(dto.CartId, dto.DishId, weekDate);
 
                 // 4. 更新购物车的更新时间
                 cart.UpdatedTime = DateTime.Now;

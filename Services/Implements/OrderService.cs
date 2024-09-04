@@ -10,16 +10,19 @@
         private readonly IGenericRepository<Dish> _dishRepository;
         private readonly IGenericRepository<OrderInf> _orderInfRepository;
         private readonly IGenericRepository<Account> _accountRepository;
+        private readonly IGenericRepository<Finance> _financeRepository;
 
 
         public OrderService(
             IGenericRepository<Weekmenu> weekMenuRepository,
             IGenericRepository<Dish> dishRepository,
+            IGenericRepository<Finance> financeRepository,
             IGenericRepository<OrderInf> orderInfRepository,
             IGenericRepository<Account> accountRepository)
         {
             _weekMenuRepository = weekMenuRepository;
             _dishRepository = dishRepository;
+            _financeRepository = financeRepository;
             _orderInfRepository = orderInfRepository;
             _accountRepository = accountRepository;
         }
@@ -182,13 +185,13 @@
             // 3. 生成订单记录
             var order = new OrderInf
             {
-                OrderId = Guid.NewGuid().ToString(), // 生成唯一订单ID
+                OrderId = await GenerateOrderIdAsync(), // 生成唯一订单ID
                 DeliverOrDining = deliver_or_dining ? "D" : "I", // 根据传入参数设置
                 CartId = cartId,
                 Status = "待处理", // 订单初始状态
                 Bonus = bonus, // 初始为0
                 Remark = "无评论", // 根据业务逻辑填充
-                FinanceId =financeId, // 假设生成一个财务ID
+                FinanceId =financeId, 
             };
 
             // 4. 保存订单记录到OrderInfo表中
@@ -216,6 +219,26 @@
             return orderInfoDto;
         }
 
+        private async Task<string> GenerateOrderIdAsync()
+        {
+            // 获取当前日期部分：20240708
+            string datePart = DateTime.Now.ToString("yyyyMMdd");
+
+            // 获取当前日期的起始和结束时间
+            DateTime todayStart = DateTime.Today;
+            DateTime todayEnd = todayStart.AddDays(1).AddTicks(-1);
+
+            // 从 Finance 表中获取当天的订单数量（FinanceDate 为当天的记录）
+            int financeCount = await _financeRepository.CountAsync(f => f.FinanceDate >= todayStart && f.FinanceDate <= todayEnd && f.FinanceType == "点单");
+
+            // 生成四位的订单计数部分，从0001开始
+            string orderCountPart = (financeCount + 1).ToString("D4");
+
+            // 组合日期部分和订单计数部分，生成最终的订单ID
+            string orderId = datePart + orderCountPart;
+
+            return orderId;
+        }
         // 3. 返回订单信息
 
     }
