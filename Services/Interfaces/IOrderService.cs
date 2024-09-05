@@ -23,11 +23,8 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<dynamic> SubmitDiningReviewAsync(ReviewSubmissionDto review);
 
         Task<ReviewResponseDto> GetReviewByOrderId(string orderId);
-
         Task<dynamic> SubmitDeliveringReviewAsync(ReviewSubmissionDto review);
         Task<ReviewResponseDto> GetDeliveringReviewByOrderId(string orderId);
-
-
         Task<OrderInfoDto> GetOrderInfoByIdAsync(string orderId);
 
 
