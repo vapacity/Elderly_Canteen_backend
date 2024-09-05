@@ -654,6 +654,88 @@
                 }
             };
         }
+
+        // 获取用户身份
+        public async Task<IdentityResponseDto> GetIdentityInOrder(string orderId ,string accountId)
+        {
+            var order = await _deliverOrderRepository.GetByIdAsync(orderId);
+            if( order == null)
+            {
+                return new IdentityResponseDto
+                {
+                    success = true,
+                    msg = "order信息不存在与配送订单中"
+                };
+            }
+
+            var dV = await _deliverVRepository.GetByIdAsync(orderId);
+            if( dV == null )
+            {
+                return new IdentityResponseDto
+                {
+                    success = true,
+                    msg = "该订单尚未分配配送者"
+                };
+            }
+            else
+            {
+                var cart = await _cartRepository.GetByIdAsync(order.CartId);
+
+                if (accountId == dV.VolunteerId && cart.AccountId == accountId)
+                {
+                    
+                    return new IdentityResponseDto
+                    {
+                        success = true,
+                        msg = "是配送者也是下单者",
+                        response = new IdentityDto
+                        {
+                            isDeliver = true,
+                            isOwner = true
+                        }
+                    };
+                }
+                else if(accountId == dV.VolunteerId)
+                {
+                    return new IdentityResponseDto
+                    {
+                        success = true,
+                        msg = "是配送者",
+                        response = new IdentityDto
+                        {
+                            isDeliver = true,
+                            isOwner = false
+                        }
+                    };
+                }
+                else
+                {
+                    
+                    if (cart.AccountId == accountId)
+                    {
+                        return new IdentityResponseDto
+                        {
+                            success = true,
+                            msg = "是下单者",
+                            response = new IdentityDto
+                            {
+                                isDeliver = false,
+                                isOwner = true,
+                            }
+                        };
+                    }
+                    else
+                    {
+                        return new IdentityResponseDto
+                        {
+                            success = false,
+                            msg = "账户与该订单无关"
+                        };
+                    }
+                }
+            }
+
+        }
     }
 }
 

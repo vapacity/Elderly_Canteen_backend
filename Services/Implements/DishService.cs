@@ -6,6 +6,7 @@ using Elderly_Canteen.Services.Interfaces;
 using System.IO;
 using Aliyun.OSS;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Elderly_Canteen.Services.Implements
 {
@@ -333,7 +334,8 @@ namespace Elderly_Canteen.Services.Implements
             }
 
             // 上传图片到 OSS
-            var fileName = $"{id}-{dish.DishName}.jpg";
+            var uniqueSuffix = DateTime.Now.ToString("yyyyMMddHHmmss"); // 或者使用 Guid.NewGuid().ToString()
+            var fileName = $"{id}-{dish.DishName}-{uniqueSuffix}.jpg";
             var imageUrl = await _ossService.UploadFileAsync(image, fileName);
 
 
@@ -345,11 +347,11 @@ namespace Elderly_Canteen.Services.Implements
 
         private async Task<string> GenerateNewDishIdAsync()
         {
-            // 获取数据库中当前 ingredient 表的最大 ID
-            var maxId = await _dishRepository.GetAll()
-                .OrderByDescending(e => e.DishId)
+            var maxId = (await _dishRepository.GetAll()
+                .ToListAsync()) // 将查询结果加载到内存
+                .OrderByDescending(e => int.TryParse(e.DishId, out int id) ? id : 0) // 转换为整数并进行排序
                 .Select(e => e.DishId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
 
             // 如果没有记录，返回 "1"
             if (maxId == null)

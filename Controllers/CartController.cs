@@ -107,12 +107,12 @@ namespace Elderly_Canteen.Controllers
 
 
         [HttpPost("ensureCart")]
-        public async Task<IActionResult> EnsureCart([FromBody] string CART_ID, string? newAddress,bool deliver_or_dining, string? remark)
+        public async Task<IActionResult> EnsureCart([FromBody] EnsureCartRequestDto dto)
         {
             // 获取当前用户的 AccountId
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            string cartId = CART_ID;
-            var response = await _cartService.EnsureCartItem(CART_ID, newAddress,deliver_or_dining,remark, accountId);
+            string cartId = dto.CART_ID;
+            var response = await _cartService.EnsureCartItem(dto.CART_ID, dto.newAddress,dto.deliver_or_dining,dto.remark, accountId);
             if (response.Success)
             {
                 return Ok(response);

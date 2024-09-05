@@ -198,11 +198,23 @@ namespace Elderly_Canteen.Controllers
 
         }
 
-        [HttpPost("getOrderMsg")]
+        [HttpGet("getOrderMsg")]
         public async Task<IActionResult> GetOrderMsg([FromQuery] string OrderId)
         {
             var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
             if (response.Success == false)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpGet("getIdentityInOrder")]
+        public async Task<IActionResult> GetIdentityInOrder([FromQuery] string orderId)
+        {
+            string accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var response = await _orderService.GetIdentityInOrder(orderId,accountId);
+            if (response.success == false)
             {
                 return BadRequest(response);
             }
