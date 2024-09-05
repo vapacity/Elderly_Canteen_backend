@@ -1,4 +1,5 @@
 ﻿using Elderly_Canteen.Data.Dtos.VolServe;
+using Elderly_Canteen.Filter;
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ namespace Elderly_Canteen.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AuthorizeRole("volunteer")]
     public class VolServeController : ControllerBase
     {
         private readonly IVolServeService _volServeService;

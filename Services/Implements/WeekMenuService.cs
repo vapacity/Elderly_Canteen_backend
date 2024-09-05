@@ -53,7 +53,8 @@ namespace Elderly_Canteen.Services.Implements
         public async Task<WmResponseDto> AddWM(WmRequestDto request)
         {
             var dishId = request.DishId;
-            var day = MapDayOfWeekToShortString(request.Date.DayOfWeek);
+            var day = request.Day; 
+            //var day = MapDayOfWeekToShortString(request.Date.DayOfWeek);
             var existedDish = await _dishRepository.GetByIdAsync(dishId);
             if (existedDish == null)
             {

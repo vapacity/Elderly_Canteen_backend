@@ -235,10 +235,10 @@
                 {
                     OrderId = order.OrderId,
                     CartId = cartId,
-                    DeliverPhone = "未接单",
+                    DeliverPhone = "待接单",
                     CustomerPhone = account.Phonenum,
                     CusAddress = address,
-                    DeliverStatus = "未接单"
+                    DeliverStatus = "待接单"
                 };
                 
 
@@ -254,7 +254,7 @@
                     OrderId = order.OrderId,
                     CusAddress = address ?? "error", // 根据业务逻辑填充
                     DeliverOrDining = deliver_or_dining,
-                    DeliverStatus = deliver_or_dining ? "未接单" : "堂食", // 初始配送状态
+                    DeliverStatus = deliver_or_dining ? "待接单" : "堂食", // 初始配送状态
                     Money = totalPrice,
                     OrderDishes = orderDishes,
                     Remark = order.Remark,
@@ -563,8 +563,8 @@
                 CReviewText = review.CReviewText,
                 CStars = review.CStars
             };
-            
 
+            order.Status = "已评价";
             await _orderReviewRepository.AddAsync(result);
             return new 
             {
@@ -620,7 +620,8 @@
                 DReviewText = review.DReviewText,
                 DStars = review.DStars
             };
-
+            order.Status = "已评价";
+            await _orderInfRepository.UpdateAsync(order);
             await _orderReviewRepository.AddAsync(result);
             await _deliverReviewRepository.AddAsync(result1);
             return new
