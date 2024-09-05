@@ -13,7 +13,11 @@ public interface IHomePageService
     /// </summary>
     /// <returns></returns>
     Task<List<object>> GetThisWeekMenu();
-
+    /// <summary>
+    /// 获取今日促销列表
+    /// </summary>
+    /// <returns></returns>
+    Task<dynamic> GetThisDayDiscountMenu();
     /// <summary>
     /// 获取评价
     /// </summary>

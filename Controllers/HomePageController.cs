@@ -72,6 +72,31 @@ namespace Elderly_Canteen.Controllers
                 });
             }
         }
+
+        [HttpGet("getDayDiscount")]
+        public async Task<ActionResult<List<object>>> GetThisDayDiscount()
+        {
+            try
+            {
+                var menu = await _homePageService.GetThisDayDiscountMenu();
+
+                if (!menu.success)
+                {
+                    return NotFound(menu);
+                }
+                return Ok(menu);
+            }
+            catch (Exception ex)
+            {
+                // 错误处理
+                return StatusCode(500, new
+                {
+                    success = false,
+                    msg = $"获取菜品列表出错: {ex.Message}",
+                    response = new List<object>()
+                });
+            }
+        }
         [HttpGet("getReviews")]
         public async Task<IActionResult> GetReviews()
         {
