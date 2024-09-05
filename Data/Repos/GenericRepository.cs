@@ -150,10 +150,11 @@ namespace Elderly_Canteen.Data.Repos
             }
 
             //计算某个条件下的元组条数
-            public async Task<int> CountAsync(Func<T, bool> predicate)
+            public async Task<int> CountAsync(Expression<Func<T, bool>> predicate)
             {
-                return await Task.Run(() => _dbSet.Count(predicate));
+                return await _dbSet.CountAsync(predicate);
             }
+
         }
 
     }

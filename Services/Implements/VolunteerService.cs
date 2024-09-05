@@ -266,6 +266,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
+            // 获取志愿者信息
             var vol = await _volunteerRepository.GetByIdAsync(accountId);
             if (vol == null)
             {
@@ -277,8 +278,10 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
+            // 获取志愿者的配送次数
             var num = await _delivervRepository.CountAsync(e => e.VolunteerId == accountId);
-            
+
+            // 查询用户的所有申请表
             var applyList = await _applicationRepository.FindByConditionAsync(e => e.AccountId == accountId);
             if (applyList == null || !applyList.Any())
             {
@@ -289,12 +292,15 @@ namespace Elderly_Canteen.Services.Implements
                     response = null
                 };
             }
+
+            // 遍历用户的申请表并检查审核状态
             foreach (var application in applyList)
             {
                 // 查找审核表中是否有对应的审核记录
                 var review = await _reviewRepository.GetByIdAsync(application.ApplicationId);
 
-                if (review.Status=="通过") // 如果审核表中没有对应的记录
+                // 检查审核记录是否存在以及审核状态
+                if (review != null && review.Status == "通过")
                 {
                     return new VolunteerResponseDto
                     {
@@ -310,14 +316,16 @@ namespace Elderly_Canteen.Services.Implements
                     };
                 }
             }
+
+            // 如果所有的申请表都未通过审核
             return new VolunteerResponseDto
             {
                 success = false,
                 msg = "用户志愿者申请未被通过",
                 response = null
             };
-
         }
+
 
         //获取所有志愿者
         public async Task<VolunteerListDto> GetAllVolunteerAsync()

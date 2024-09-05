@@ -72,7 +72,19 @@ namespace Elderly_Canteen.Controllers
             }
             return Ok(response);
         }
-        [HttpPost("postDiningComment")]
+
+        [HttpPost("getOrderMsg")]
+        public async Task<IActionResult> GetOrderMsg([FromQuery] string OrderId)
+        {
+            var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
+            if (response.Success == false)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpGet("postDiningComment")]
         public async Task<IActionResult> SubmitReview([FromBody] ReviewSubmissionDto review)
         {
             if (review == null || string.IsNullOrWhiteSpace(review.OrderId) || review.CStars < 1 || review.CStars > 5)
@@ -195,20 +207,7 @@ namespace Elderly_Canteen.Controllers
                     msg = $"服务器内部错误: {ex.Message}"
                 });
             }
-
         }
-
-        [HttpPost("getOrderMsg")]
-        public async Task<IActionResult> GetOrderMsg([FromQuery] string OrderId)
-        {
-            var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
-            if (response.Success == false)
-            {
-                return BadRequest(response);
-            }
-            return Ok(response);
-        }
-
 
     }
 }
