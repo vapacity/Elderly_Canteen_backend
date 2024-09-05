@@ -26,7 +26,7 @@ namespace Elderly_Canteen.Services.Interfaces
         Task<dynamic> SubmitDeliveringReviewAsync(ReviewSubmissionDto review);
         Task<ReviewResponseDto> GetDeliveringReviewByOrderId(string orderId);
         Task<OrderInfoDto> GetOrderInfoByIdAsync(string orderId);
-
+        Task<IdentityResponseDto> GetIdentityInOrder(string orderId, string accountId);
 
     }
 }

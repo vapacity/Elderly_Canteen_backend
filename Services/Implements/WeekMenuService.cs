@@ -50,10 +50,11 @@ namespace Elderly_Canteen.Services.Implements
                 _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), dayOfWeek, null)
             };
         }
+        
         public async Task<WmResponseDto> AddWM(WmRequestDto request)
         {
             var dishId = request.DishId;
-            var day = request.Day; 
+            var day = MapDayOfWeekToShortString(request.Date.DayOfWeek); 
             //var day = MapDayOfWeekToShortString(request.Date.DayOfWeek);
             var existedDish = await _dishRepository.GetByIdAsync(dishId);
             if (existedDish == null)

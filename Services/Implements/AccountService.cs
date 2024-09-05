@@ -367,7 +367,8 @@ namespace Elderly_Canteen.Services.Implements
             {
                 // 处理头像文件并生成路径
                 // 上传图片到 OSS
-                var fileName = $"{accountId}-portrait.jpg";
+                var uniqueSuffix = DateTime.Now.ToString("yyyyMMddHHmmss"); // 或者使用 Guid.NewGuid().ToString()
+                var fileName = $"{accountId}-portrait-{uniqueSuffix}.jpg";
                 var imageUrl = await _ossService.UploadFileAsync(avatar, fileName);
                 account.Portrait = imageUrl;
             }
