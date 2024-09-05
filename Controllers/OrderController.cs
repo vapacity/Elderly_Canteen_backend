@@ -1,16 +1,13 @@
-<<<<<<< Updated upstream
+
 ﻿using Elderly_Canteen.Data.Dtos.Cart;
 using Elderly_Canteen.Data.Entities;
-=======
 ﻿using Elderly_Canteen.Data.Dtos.Order;
->>>>>>> Stashed changes
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Elderly_Canteen.Data.Dtos.Order;
 using System.Xml.Linq;
 
 namespace Elderly_Canteen.Controllers
@@ -37,7 +34,7 @@ namespace Elderly_Canteen.Controllers
             return Ok(response);
         }
 
-<<<<<<< Updated upstream
+
         [HttpGet("getPastOrder")]
         public async Task<IActionResult> GetHistory()
         {
@@ -49,15 +46,15 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest(response);
             }
             return Ok(response);
-            
+
         }
 
         [HttpPost("postConfirmOrder")]
-        public async Task<IActionResult> ConfirmOrder([FromBody]NormalOrderRequestDto dto)
+        public async Task<IActionResult> ConfirmOrder([FromBody] NormalOrderRequestDto dto)
         {
             string accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var response = await _orderService.ConfirmOrderAsync(dto.OrderId,accountId);
+            var response = await _orderService.ConfirmOrderAsync(dto.OrderId, accountId);
             if (response.Success == false)
             {
                 return BadRequest(response);
@@ -74,7 +71,7 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest(response);
             }
             return Ok(response);
-=======
+        }
         [HttpPost("postDiningComment")]
         public async Task<IActionResult> SubmitReview([FromBody] ReviewSubmissionDto review)
         {
@@ -143,12 +140,12 @@ namespace Elderly_Canteen.Controllers
             }
 
             // 检查DStars是否存在且在有效范围内
-            if (review.DStars.HasValue&& (review.DStars < 1 || review.DStars > 5))
+            if (review.DStars.HasValue && (review.DStars < 1 || review.DStars > 5))
             {
                 return BadRequest("配送评分必须在1到5星之间。");
             }
 
-            if (review.DReviewText!=null&&review.CReviewText?.Length > 150)
+            if (review.DReviewText != null && review.CReviewText?.Length > 150)
             {
                 return BadRequest("口味评价不应超过50个中文字符。");
             }
@@ -198,11 +195,11 @@ namespace Elderly_Canteen.Controllers
                     msg = $"服务器内部错误: {ex.Message}"
                 });
             }
->>>>>>> Stashed changes
+
         }
 
         [HttpPost("getOrderMsg")]
-        public async Task<IActionResult> GetOrderMsg([FromQuery]string OrderId)
+        public async Task<IActionResult> GetOrderMsg([FromQuery] string OrderId)
         {
             var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
             if (response.Success == false)
@@ -215,3 +212,4 @@ namespace Elderly_Canteen.Controllers
 
     }
 }
+
