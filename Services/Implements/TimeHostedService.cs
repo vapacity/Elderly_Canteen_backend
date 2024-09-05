@@ -18,9 +18,9 @@ namespace Elderly_Canteen.Services.Implements
         {
             _logger.LogInformation("Timed Hosted Service running.");
 
-            // 设定定时器在每天晚上22点触发
+            
             var now = DateTime.Now;
-            var scheduledTime = new DateTime(now.Year, now.Month, now.Day, 2, 0, 0); // 22点
+            var scheduledTime = new DateTime(now.Year, now.Month, now.Day, 1, 50,0); 
             if (now > scheduledTime)
             {
                 scheduledTime = scheduledTime.AddDays(1); // 如果当前时间已过22点，定时到明天晚上22点
@@ -39,7 +39,7 @@ namespace Elderly_Canteen.Services.Implements
             using (var scope = _serviceProvider.CreateScope())
             {
                 var stockService = scope.ServiceProvider.GetRequiredService<IRepoService>();
-
+                var cartService = scope.ServiceProvider.GetRequiredService<ICartService>();
                 // 调用每日库存补充函数
                 stockService.ReplenishDailyStockAsync().GetAwaiter().GetResult();
 
@@ -48,7 +48,7 @@ namespace Elderly_Canteen.Services.Implements
 
                 // 删除过期购物车
 
-                //
+                cartService.DeleteUnassociatedCartsAsync().GetAwaiter().GetResult();
             }
         }
 

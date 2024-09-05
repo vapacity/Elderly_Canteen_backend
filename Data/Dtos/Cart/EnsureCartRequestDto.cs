@@ -6,5 +6,6 @@
         public string? newAddress { get; set; }
         public bool deliver_or_dining { get; set; }
         public string? remark { get; set; }
+        public bool? set_default_add { get; set; }
     }
 }

@@ -215,13 +215,13 @@ namespace Elderly_Canteen.Services.Implements
         public async Task<AccessOrderResponseDto> GetAcceptedOrder(string accountId)
         {
             // 1. 查找所有 deliverStatus 为 "待接单" 的 DeliverOrder 记录
-            var deliverOrders = await _deliverOrderRepository.FindByConditionAsync(d => d.DeliverStatus != "待接单");
+            var deliverOrders = await _deliverOrderRepository.FindByConditionAsync(d => d.DeliverStatus == "已接单");
 
             if (!deliverOrders.Any())
             {
                 return new AccessOrderResponseDto
                 {
-                    Success = false,
+                    Success = true,
                     Msg = "不存在配送订单",
                     Response = new List<Response> { }
                 };
@@ -244,7 +244,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 return new AccessOrderResponseDto
                 {
-                    Success = false,
+                    Success = true,
                     Msg = "没有已接单/已送达的订单",
                     Response = new List<Response>()
                 };
@@ -347,7 +347,7 @@ namespace Elderly_Canteen.Services.Implements
             {
                 return new AccessOrderResponseDto
                 {
-                    Success = false,
+                    Success = true,
                     Msg = "没有已送达的订单",
                     Response = new List<Response>()
                 };

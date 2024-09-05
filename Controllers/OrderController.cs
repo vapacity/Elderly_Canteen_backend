@@ -62,7 +62,7 @@ namespace Elderly_Canteen.Controllers
             return Ok(response);
         }
 
-        [HttpPost("getOrderDeliverMsg")]
+        [HttpGet("getOrderDeliverMsg")]
         public async Task<IActionResult> GetOrderDeliverMsg([FromQuery] string OrderId)
         {
             var response = await _orderService.GetODMsg(OrderId);
@@ -74,7 +74,7 @@ namespace Elderly_Canteen.Controllers
         }
 
 
-        [HttpGet("postDiningComment")]
+        [HttpPost("postDiningComment")]
         public async Task<IActionResult> SubmitReview([FromBody] ReviewSubmissionDto review)
         {
             if (review == null || string.IsNullOrWhiteSpace(review.OrderId) || review.CStars < 1 || review.CStars > 5)

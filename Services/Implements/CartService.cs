@@ -13,6 +13,7 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<OrderInf> _orderInfoRepository;
         private readonly IGenericRepository<Weekmenu> _weekMenuRepository;
         private readonly IGenericRepository<Dish> _dishRepository;
+        private readonly IGenericRepository<Account> _accountRepository;
         private readonly IOrderService _orderService;
         private readonly IFinanceService _financeService;
         private readonly IRepoService _repoService;
@@ -22,6 +23,7 @@ namespace Elderly_Canteen.Services.Implements
             IGenericRepository<CartItem> cartItemRepository,
             IGenericRepository<OrderInf> orderInfoRepository,
             IGenericRepository<Weekmenu> weekMenuRepository,
+            IGenericRepository<Account> accountRepository,
             IOrderService orderService,
             IFinanceService financeService,
             IRepoService repoService,
@@ -33,6 +35,7 @@ namespace Elderly_Canteen.Services.Implements
             _cartItemRepository = cartItemRepository;
             _orderInfoRepository = orderInfoRepository;
             _weekMenuRepository = weekMenuRepository;
+            _accountRepository = accountRepository;
             _orderService = orderService;
             _financeService = financeService;
             _repoService = repoService;
@@ -274,12 +277,12 @@ namespace Elderly_Canteen.Services.Implements
                 if (dto.Quantity <= 0)
                 {
                     // 数量不对
-                    return new CartItemResponseDto { Success = false, Message = "选择数量大于0的商品" };
+                    return new CartItemResponseDto { Success = true, Message = "选择数量大于0的商品" };
                 }
                 if (dto.Quantity > weekMenu.Stock)
                 {
                     // 请求的数量超过库存
-                    return new CartItemResponseDto { Success = false, Message = "超过库存，操作失败" };
+                    return new CartItemResponseDto { Success = true, Message = "超过库存，操作失败" };
                 }
 
                 // 4. 更新或添加购物车项
@@ -370,7 +373,7 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
-        public async Task<CartItemResponseDto> EnsureCartItem(string cartId, string? newAddress, bool deliver_or_dining,string?remark, string accountId)
+        public async Task<CartItemResponseDto> EnsureCartItem(string cartId,bool? set_default_add, string? newAddress, bool deliver_or_dining,string?remark, string accountId)
         {
             // 查找与用户关联的购物车
             // 查找购物车item
@@ -447,6 +450,13 @@ namespace Elderly_Canteen.Services.Implements
                             Success = false,
                             Message = orderInfo.Msg
                         };
+                    }
+                    // 更新默认地址
+                    var account = await _accountRepository.GetByIdAsync(accountId); 
+                    if (set_default_add != null && set_default_add == true)
+                    {
+                        account.Address = newAddress;
+                        await _accountRepository.UpdateAsync(account);
                     }
 
                     // 6. 提交事务

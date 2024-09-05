@@ -1,4 +1,5 @@
 ﻿using Elderly_Canteen.Data.Dtos.Order;
+using Elderly_Canteen.Data.Dtos.Register;
 using Elderly_Canteen.Data.Entities;
 
 namespace Elderly_Canteen.Services.Interfaces

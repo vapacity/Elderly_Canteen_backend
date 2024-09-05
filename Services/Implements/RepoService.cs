@@ -577,13 +577,13 @@ namespace Elderly_Canteen.Services.Implements
                     string today = MapDayOfWeekToShortString(DateTime.Now.DayOfWeek);
 
                     // 2. 获取所有当天的 WeekMenu 项目
-                    var weekMenus = await _weekMenuRepository.FindByConditionAsync(w => w.Week == DateTime.Now.Date && w.Day == today);
+                    var weekMenus = await _weekMenuRepository.FindByConditionAsync(w => w.Week == DateTime.Now.Date.AddDays(1));
 
                     foreach (var weekMenu in weekMenus)
                     {
                         // 3. 检查是否有足够的食材库存来支持 50 份
                         int maxPortions = await CalculateMaxPortionsAsync(weekMenu.DishId, 50);
-
+                        weekMenu.Sales = 0;
                         // 4. 如果库存不足，调整库存为能支持的最大份数
                         if (maxPortions < 50)
                         {
@@ -629,7 +629,7 @@ namespace Elderly_Canteen.Services.Implements
         public async Task CheckAndRemoveExpiredIngredientsAsync()
         {
             
-            await _repoRepository.DeleteByConditionAsync(r => r.ExpirationTime <= DateTime.Now);
+            await _repoRepository.DeleteByConditionAsync(r => r.ExpirationTime <= DateTime.Now || r.RemainAmount == 0);
 
             var ingredients = (await _repoRepository.GetAllAsync())
                               .OrderBy(r => r.ExpirationTime)

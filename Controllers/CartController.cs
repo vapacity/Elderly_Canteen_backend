@@ -112,7 +112,7 @@ namespace Elderly_Canteen.Controllers
             // 获取当前用户的 AccountId
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             string cartId = dto.CART_ID;
-            var response = await _cartService.EnsureCartItem(dto.CART_ID, dto.newAddress,dto.deliver_or_dining,dto.remark, accountId);
+            var response = await _cartService.EnsureCartItem(dto.CART_ID, dto.set_default_add,dto.newAddress,dto.deliver_or_dining,dto.remark, accountId);
             if (response.Success)
             {
                 return Ok(response);
@@ -161,6 +161,12 @@ namespace Elderly_Canteen.Controllers
                     msg = "cartId doesn't exist or has been associated with order"
                 });
             }
+        }
+        [HttpDelete("tryDelete")]
+        public async Task<bool> TryDelete()
+        {
+            await _cartService.DeleteUnassociatedCartsAsync();
+            return true;
         }
     }
 }

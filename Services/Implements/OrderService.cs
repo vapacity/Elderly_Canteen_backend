@@ -5,6 +5,7 @@
     using Elderly_Canteen.Services.Interfaces;
     using Elderly_Canteen.Data.Dtos.Order;
     using Elderly_Canteen.Data.Dtos.EmployeeInfo;
+    using Elderly_Canteen.Data.Dtos.Register;
 
     public class OrderService:IOrderService
     {
@@ -458,7 +459,7 @@
                 Msg = "success",
                 Response = new VolunteerMsg
                 {
-                    VolunteerId = volun.OrderId,
+                    VolunteerId = volun.VolunteerId,
                     VolunteerName = volAccount.Name
                 }
             };
@@ -557,20 +558,39 @@
                     msg = $"订单ID为 {review.OrderId} 的订单不存在。",
                 };
             }
-            var result = new OrderReview
-            {
-                OrderId = review.OrderId,
-                CReviewText = review.CReviewText,
-                CStars = review.CStars
-            };
+            var existedReview = await _orderReviewRepository.GetByIdAsync(review.OrderId);
 
-            order.Status = "已评价";
-            await _orderReviewRepository.AddAsync(result);
-            return new 
+            if (existedReview == null)
             {
-                success = true,
-                msg = "订单评价已提交！",
-            };
+                var result = new OrderReview
+                {
+                    OrderId = review.OrderId,
+                    CReviewText = review.CReviewText,
+                    CStars = review.CStars
+                };
+                await _orderReviewRepository.AddAsync(result);
+                order.Status = "已评价";
+                await _orderInfRepository.UpdateAsync(order);
+                return new
+                {
+                    success = true,
+                    msg = "订单评价已提交！",
+                };
+            }
+            else
+            {
+                existedReview.OrderId = order.OrderId;
+                existedReview.CReviewText = review.CReviewText;
+                existedReview.CStars = review.CStars;
+                await _orderReviewRepository.UpdateAsync(existedReview);
+                order.Status = "已评价";
+                await _orderInfRepository.UpdateAsync(order);
+                return new
+                {
+                    success = true,
+                    msg = "订单评价已存在，已更新！",
+                };
+            }         
         }
 
         //获取评价 （堂食）
@@ -601,42 +621,88 @@
             var order = await _orderInfRepository.GetByIdAsync(review.OrderId);
             if (order == null)
             {
-
                 return new
                 {
                     success = false,
                     msg = $"订单ID为 {review.OrderId} 的订单不存在。",
                 };
             }
-            var result = new OrderReview
+            var existedReview = await _orderReviewRepository.GetByIdAsync(review.OrderId);
+
+            if (existedReview == null)
             {
-                OrderId = review.OrderId,
-                CReviewText = review.CReviewText,
-                CStars = review.CStars
-            };
-            var result1 = new DeliverReview
+                var result = new OrderReview
+                {
+                    OrderId = review.OrderId,
+                    CReviewText = review.CReviewText,
+                    CStars = review.CStars
+                };
+                await _orderReviewRepository.AddAsync(result);
+                order.Status = "已评价";
+                await _orderReviewRepository.UpdateAsync(result);
+            }
+            else
             {
-                OrderId = review.OrderId,
-                DReviewText = review.DReviewText,
-                DStars = review.DStars
-            };
-            order.Status = "已评价";
-            await _orderInfRepository.UpdateAsync(order);
-            await _orderReviewRepository.AddAsync(result);
-            await _deliverReviewRepository.AddAsync(result1);
+                existedReview.OrderId = order.OrderId;
+                existedReview.CReviewText = review.CReviewText;
+                existedReview.CStars = review.CStars;
+                await _orderReviewRepository.UpdateAsync(existedReview);
+                order.Status = "已评价";
+                await _orderInfRepository.UpdateAsync(order);
+            }
+
+            var existedDeliverReview = await _deliverReviewRepository.GetByIdAsync(order.OrderId);
+            if (existedDeliverReview == null)
+            {
+                var result1 = new DeliverReview
+                {
+                    OrderId = review.OrderId,
+                    DReviewText = review.DReviewText,
+                    DStars = review.DStars
+                };
+                await _deliverReviewRepository.AddAsync(result1);
+                order.Status = "已评价";
+                await _orderInfRepository.UpdateAsync(order);
+            }
+            else
+            {
+                existedDeliverReview.OrderId = order.OrderId;
+                existedDeliverReview.DReviewText = review.DReviewText;
+                existedDeliverReview.DStars = review.DStars;
+                await _deliverReviewRepository.UpdateAsync(existedDeliverReview);
+                order.Status = "已评价";
+                await _orderInfRepository.UpdateAsync(order);
+
+            }
             return new
             {
                 success = true,
-                msg = "评价已提交！",
+                msg = "订单评价已提交！",
             };
+
         }
 
-        //获取评价 （堂食）
+        //获取评价 （外送）
         public async Task<ReviewResponseDto> GetDeliveringReviewByOrderId(string orderId)
         {
             var review = await _orderReviewRepository.GetByIdAsync(orderId);
             var review1 = await _deliverReviewRepository.GetByIdAsync(orderId);
-
+            if(review1 == null)
+            {
+                return new ReviewResponseDto
+                {
+                    success = true,
+                    msg = "未找到该订单的配送评价",
+                    response = new List<ReviewResponseData>
+                    {
+                        new ReviewResponseData
+                        {
+                            CStars=(decimal)review.CStars,
+                            CReviewText=review.CReviewText
+                        }
+                    }
+                };
+            }
             // 假设数据库中已存有评价信息
             return new ReviewResponseDto
             {
@@ -658,28 +724,87 @@
         // 获取用户身份
         public async Task<IdentityResponseDto> GetIdentityInOrder(string orderId ,string accountId)
         {
+            var orderInf = await _orderInfRepository.GetByIdAsync(orderId);
+            if(orderInf == null)
+            {
+                return new IdentityResponseDto
+                {
+                    success = false,
+                    msg = "订单不存在"
+                };
+            }
+
+            
+            var cart = await _cartRepository.GetByIdAsync(orderInf.CartId);
+            if (orderInf.DeliverOrDining == "I")
+            {
+                if (cart.AccountId == accountId)
+                    return new IdentityResponseDto
+                    {
+                        success = true,
+                        msg = "是下单者",
+                        response = new IdentityDto
+                        {
+                            isDeliver = false,
+                            isOwner = true,
+                        }
+                    };
+                else
+                    return new IdentityResponseDto
+                    {
+                        success = false,
+                        msg = "accountId 与订单有冲突"
+                    };
+                    
+            }
+            var dV = await _deliverVRepository.GetByIdAsync(orderId);
             var order = await _deliverOrderRepository.GetByIdAsync(orderId);
             if( order == null)
             {
                 return new IdentityResponseDto
                 {
                     success = true,
-                    msg = "order信息不存在与配送订单中"
+                    msg = "order信息不存在与配送订单中",
+                    response = new IdentityDto
+                    {
+                        isDeliver = false,
+                        isOwner = false,
+                    }
                 };
             }
 
-            var dV = await _deliverVRepository.GetByIdAsync(orderId);
-            if( dV == null )
+            
+
+
+            if ( dV == null )
             {
+                if( cart.AccountId == accountId)
+                {
+                    return new IdentityResponseDto
+                    {
+                        success = true,
+                        msg = "是下单者",
+                        response = new IdentityDto
+                        {
+                            isOwner = true,
+                            isDeliver = false
+                        }
+                    };
+                }
                 return new IdentityResponseDto
                 {
                     success = true,
-                    msg = "该订单尚未分配配送者"
+                    msg = "该订单尚未分配配送者",
+                    response = new IdentityDto
+                    {
+                        isOwner = false,
+                        isDeliver = false
+                    }
                 };
             }
             else
             {
-                var cart = await _cartRepository.GetByIdAsync(order.CartId);
+                
 
                 if (accountId == dV.VolunteerId && cart.AccountId == accountId)
                 {

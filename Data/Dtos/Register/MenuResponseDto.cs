@@ -1,4 +1,4 @@
-﻿namespace Elderly_Canteen.Data.Dtos.Order
+﻿namespace Elderly_Canteen.Data.Dtos.Register
 {
     using System;
     using System.Collections.Generic;
