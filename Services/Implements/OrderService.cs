@@ -149,7 +149,7 @@
             return totalPrice;
         }
 
-        public async Task<OrderInfoDto> CreateOrderAsync(string cartId, string accountId, string? newAddress, bool deliver_or_dining, string financeId, List<CartItem> cartItems)
+        public async Task<OrderInfoDto> CreateOrderAsync(string cartId, string accountId, string? newAddress, bool deliver_or_dining,string? remark, string financeId, List<CartItem> cartItems)
         {
             // 1. 初始化变量，用于计算总价
             decimal totalPrice = 0;
@@ -207,7 +207,7 @@
                 CartId = cartId,
                 Status = "待处理", // 订单初始状态
                 Bonus = bonus, // 初始为0
-                Remark = "无评论", // 根据业务逻辑填充
+                Remark = remark != null ? remark : "无",
                 FinanceId = financeId,
             };
 

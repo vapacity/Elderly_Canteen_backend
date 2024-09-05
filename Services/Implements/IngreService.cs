@@ -82,6 +82,19 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
             string newId = await GenerateNewIdAsync();
+            var existingAccount = await _ingreRepository.GetAll()
+                .FirstOrDefaultAsync(a => a.IngredientId == newId);
+
+            if (existingAccount != null)
+            {
+                return new IngreResponseDto
+                {
+                    message = "IngredientId already existed",
+                    success = false,
+                    IngredientId = newId,
+                    IngredientName = dto.IngredientName
+                };
+            }
             //创建新ingre
             var ingre = new Ingredient
             {
@@ -156,11 +169,11 @@ namespace Elderly_Canteen.Services.Implements
         }
         private async Task<string> GenerateNewIdAsync()
         {
-            // 获取数据库中当前 ingredient 表的最大 ID
-            var maxId = await _ingreRepository.GetAll()
-                .OrderByDescending(e => e.IngredientId)
+            var maxId = (await _ingreRepository.GetAll()
+                .ToListAsync()) // 将查询结果加载到内存
+                .OrderByDescending(e => int.TryParse(e.IngredientId, out int id) ? id : 0) // 转换为整数并进行排序
                 .Select(e => e.IngredientId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
 
             // 如果没有记录，返回 "1"
             if (maxId == null)
