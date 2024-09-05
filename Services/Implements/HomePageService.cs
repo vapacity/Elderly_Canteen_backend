@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Elderly_Canteen.Data.Dtos.EmployeeInfo;
 using System.Text;
+using Elderly_Canteen.Data.Dtos.Order;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 public class HomePageService : IHomePageService
@@ -28,6 +30,8 @@ public class HomePageService : IHomePageService
         int daysToMonday = (int)today.DayOfWeek- (int)DayOfWeek.Monday;
         DateTime monday = today.AddDays(-daysToMonday);
         DateTime sunday = monday.AddDays(6);
+
+
 
         // 预计算日期值
         var mondayDate = monday.Date;
@@ -92,6 +96,50 @@ public class HomePageService : IHomePageService
         return await File.ReadAllBytesAsync(defaultPicturePath);
     }
 
+    public async Task<dynamic> GetThisDayDiscountMenu()
+    {
+        // 获取当前日期和时间
+        DateTime today = DateTime.Today;
+
+        DateTime startDate = today;
+        DateTime endDate = startDate.AddDays(1).AddTicks(-1);
+
+        // 查找符合条件的 WeekMenu 项目
+        var weekMenus = (await _weekmenuRepository.FindByConditionAsync(wm => wm.Week >=startDate&&wm.Week<=endDate)).ToList();
+
+        // 准备存放菜单信息的列表
+        var menuList = new List<object>();
+
+        // 遍历每个 WeekMenu 项，仅选择 DisPrice 大于 0 的项
+        foreach (var weekMenu in weekMenus.Where(wm => wm.DisPrice > 0))
+        {
+            // 使用 DishId 从 DishRepository 中获取菜品信息
+            var dish = await _dishRepository.GetByIdAsync(weekMenu.DishId);
+
+            if (dish != null)
+            {
+                // 将菜品信息映射到 Menu DTO 中
+                menuList.Add(new
+                {
+                    DishId = dish.DishId,
+                    DishName = dish.DishName,
+                    Price = dish.Price,
+                    DisPrice = weekMenu.DisPrice,
+                    Picture = dish.ImageUrl,
+                    Sales = weekMenu.Sales,
+                });
+            }
+        }
+
+        var result = new
+        {
+            success = menuList.Any(),
+            msg = menuList.Any() ? "成功获取菜单" : "今日无促销菜单！",
+            response = menuList,
+        };
+
+        return result;
+    }
     public async Task<object> GetReviewsAsync()
     {
         // 从数据库中查询评价数据，并仅选择需要的字段
