@@ -215,7 +215,7 @@ namespace Elderly_Canteen.Services.Implements
         public async Task<AccessOrderResponseDto> GetAcceptedOrder(string accountId)
         {
             // 1. 查找所有 deliverStatus 为 "待接单" 的 DeliverOrder 记录
-            var deliverOrders = await _deliverOrderRepository.FindByConditionAsync(d => d.DeliverStatus != "未接单");
+            var deliverOrders = await _deliverOrderRepository.FindByConditionAsync(d => d.DeliverStatus != "待接单");
 
             // 2. 筛选出 deliverId 在 deliverV 表中与 accountId 匹配的订单
             var filteredOrders = new List<DeliverOrder>();

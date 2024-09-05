@@ -1,9 +1,6 @@
-<<<<<<< Updated upstream
 ﻿using Elderly_Canteen.Data.Dtos.Cart;
 using Elderly_Canteen.Data.Entities;
-=======
 ﻿using Elderly_Canteen.Data.Dtos.Order;
->>>>>>> Stashed changes
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -37,7 +34,6 @@ namespace Elderly_Canteen.Controllers
             return Ok(response);
         }
 
-<<<<<<< Updated upstream
         [HttpGet("getPastOrder")]
         public async Task<IActionResult> GetHistory()
         {
@@ -74,8 +70,20 @@ namespace Elderly_Canteen.Controllers
                 return BadRequest(response);
             }
             return Ok(response);
-=======
-        [HttpPost("postDiningComment")]
+        }
+
+        [HttpPost("getOrderMsg")]
+        public async Task<IActionResult> GetOrderMsg([FromQuery] string OrderId)
+        {
+            var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
+            if (response.Success == false)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpGet("postDiningComment")]
         public async Task<IActionResult> SubmitReview([FromBody] ReviewSubmissionDto review)
         {
             if (review == null || string.IsNullOrWhiteSpace(review.OrderId) || review.CStars < 1 || review.CStars > 5)
@@ -198,20 +206,6 @@ namespace Elderly_Canteen.Controllers
                     msg = $"服务器内部错误: {ex.Message}"
                 });
             }
->>>>>>> Stashed changes
         }
-
-        [HttpPost("getOrderMsg")]
-        public async Task<IActionResult> GetOrderMsg([FromQuery]string OrderId)
-        {
-            var response = await _orderService.GetOrderInfoByIdAsync(OrderId);
-            if (response.Success == false)
-            {
-                return BadRequest(response);
-            }
-            return Ok(response);
-        }
-
-
     }
 }

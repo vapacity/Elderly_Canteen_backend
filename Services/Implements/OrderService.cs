@@ -218,7 +218,7 @@
                 OrderId = await GenerateOrderIdAsync(), // 生成唯一订单ID
                 DeliverOrDining = deliver_or_dining ? "D" : "I", // 根据传入参数设置
                 CartId = cartId,
-                Status = "待处理", // 订单初始状态
+                Status = "待确认", // 订单初始状态
                 Bonus = bonus, // 初始为0
                 Remark = remark != null ? remark : "无",
                 FinanceId = financeId,
@@ -441,7 +441,7 @@
                     Msg = "没有志愿者接单"
                 };
             }
-            var volAccount = await _accountRepository.GetByIdAsync(volun.OrderId);
+            var volAccount = await _accountRepository.GetByIdAsync(volun.VolunteerId);
             if (volAccount == null)
             {
                 return new GetOdMsgResponseDto
