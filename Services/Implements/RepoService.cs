@@ -257,6 +257,37 @@ namespace Elderly_Canteen.Services.Implements
                         Data = null
                     };
                 }
+                //数量不对
+                if (amount <=0)
+                {
+                    return new RestockResponseDto
+                    {
+                        Success = false,
+                        Message = "wrong amount.",
+                        Data = null
+                    };
+                }
+                //价格不对
+                if (price < 0)
+                {
+                    return new RestockResponseDto
+                    {
+                        Success = false,
+                        Message = "wrong price.",
+                        Data = null
+                    };
+                }
+                //有效期已到期
+                if (expiry < DateTime.Now)
+                {
+                    return new RestockResponseDto
+                    {
+                        Success = false,
+                        Message = "you can't restock ingredient already expire.",
+                        Data = null
+                    };
+                }
+
                 var existedRepo = await _repoRepository.FindByCompositeKeyAsync<Repository>(ingredientId, expiry);
                 
                 if (existedRepo !=null)

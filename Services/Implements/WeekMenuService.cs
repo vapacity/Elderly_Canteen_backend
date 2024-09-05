@@ -24,17 +24,15 @@ namespace Elderly_Canteen.Services.Implements
         }
         public DateTime GetWeekStartDate(DateTime inputDate)
         {
-            // 基准日期：2024-09-02（周一）
+            // 基准日期：2024年9月2日（周一）
             DateTime baseDate = new DateTime(2024, 9, 2);
 
             // 计算输入日期与基准日期的天数差距
             int daysDifference = (inputDate.Date - baseDate.Date).Days;
 
-            // 计算周数
-            int weekNumber = daysDifference / 7 + 1;
-
-            // 计算对应周的周一日期
-            DateTime weekStartDate = baseDate.AddDays((weekNumber - 1) * 7);
+            // 计算该日期所在周的周一
+            int daysToMonday = (daysDifference % 7 + 7) % 7;  // 确保结果为正数
+            DateTime weekStartDate = inputDate.AddDays(-daysToMonday).Date;
 
             return weekStartDate;
         }
@@ -68,6 +66,20 @@ namespace Elderly_Canteen.Services.Implements
 
             var weekDate = GetWeekStartDate(request.Date);
 
+            // 获取当前日期所在周的周一
+            var dateNow = GetWeekStartDate(DateTime.Now);
+
+            // 检查是否是过去的周
+            if (weekDate < dateNow)
+            {
+                return new WmResponseDto
+                {
+                    Success = false,
+                    Message = $"you can't add dish in the past week{weekDate}",
+                };
+            }
+
+            // 检查当天是否已有菜品
             var existedWM = await _weekMenuRepository.FindByCompositeKeyAsync<Weekmenu>(dishId, request.Date.Date);
             if (existedWM != null)
             {
@@ -115,10 +127,7 @@ namespace Elderly_Canteen.Services.Implements
             var weekMenus = await _weekMenuRepository.FindByConditionAsync(wm =>
                 wm.Week.Date >= weekStartDate && wm.Week.Date <= weekEndDate);
 
-            if (!weekMenus.Any())
-            {
-                return null;
-            }
+            // 如果找到菜单，初始化所有列表
             var response = new AllWeekMenuResponseDto
             {
                 Mon = new List<Mon>(),
@@ -130,6 +139,7 @@ namespace Elderly_Canteen.Services.Implements
                 Sun = new List<Sun>()
             };
 
+            // 将每个菜单项放入对应的星期
             foreach (var weekMenu in weekMenus)
             {
                 // 根据 dishId 从 Dish 表中获取 Dish 实体
@@ -252,6 +262,25 @@ namespace Elderly_Canteen.Services.Implements
                     Message = "dish not found today"
                 };
             }
+            var dateNow = GetWeekStartDate(DateTime.Now);
+            if (weekStartDate < dateNow)
+            {
+                return new DiscountResponseDto
+                {
+                    Success = false,
+                    Message = "you can't upload discount in the past",
+                };
+            }
+
+            if (dto.Discount <=0 || dto.Discount >= 1)
+            {
+                return new DiscountResponseDto
+                {
+                    Success = false,
+                    Message = "you must choose discount between 0 and 1",
+                };
+            }
+
             var dishPrice = (await _dishRepository.GetByIdAsync(dishId)).Price;
             decimal disPrice = dishPrice * dto.Discount;
             existedDish.DisPrice = disPrice;
@@ -278,7 +307,23 @@ namespace Elderly_Canteen.Services.Implements
                 Success = true,
                 Message = "Batch discount applied successfully."
             };
-
+            var dateNow = GetWeekStartDate(DateTime.Now);
+            if (weekStartDate < dateNow)
+            {
+                return new BatchResponseDto
+                {
+                    Success = false,
+                    Message = "you can't upload discount in the past",
+                };
+            }
+            if (dto.Discount <= 0 || dto.Discount >= 1)
+            {
+                return new BatchResponseDto
+                {
+                    Success = false,
+                    Message = "you must choose discount between 0 and 1",
+                };
+            }
             foreach (var dishId in dishIds)
             {
                 // 查找指定 dishId 的周菜单记录

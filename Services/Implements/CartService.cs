@@ -271,6 +271,11 @@ namespace Elderly_Canteen.Services.Implements
                 }
 
                 // 3. 检查库存是否足够
+                if (dto.Quantity <= 0)
+                {
+                    // 数量不对
+                    return new CartItemResponseDto { Success = false, Message = "选择数量大于0的商品" };
+                }
                 if (dto.Quantity > weekMenu.Stock)
                 {
                     // 请求的数量超过库存
@@ -365,7 +370,7 @@ namespace Elderly_Canteen.Services.Implements
             }
         }
 
-        public async Task<CartItemResponseDto> EnsureCartItem(string cartId, string? newAddress, bool deliver_or_dining, string accountId)
+        public async Task<CartItemResponseDto> EnsureCartItem(string cartId, string? newAddress, bool deliver_or_dining,string?remark, string accountId)
         {
             // 查找与用户关联的购物车
             // 查找购物车item
@@ -433,7 +438,7 @@ namespace Elderly_Canteen.Services.Implements
                     }
 
                     // 4. 调用订单管理服务生成订单
-                    var orderInfo = await _orderService.CreateOrderAsync(cartId, accountId,newAddress, deliver_or_dining, response.FinanceId, cartItems);
+                    var orderInfo = await _orderService.CreateOrderAsync(cartId, accountId,newAddress, deliver_or_dining,remark, response.FinanceId, cartItems);
                     if (orderInfo.Success == false)
                     {
                         await transaction.RollbackAsync();
