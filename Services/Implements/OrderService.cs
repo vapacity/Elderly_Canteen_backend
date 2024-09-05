@@ -441,7 +441,7 @@
                     Msg = "没有志愿者接单"
                 };
             }
-            var volAccount = await _accountRepository.GetByIdAsync(volun.OrderId);
+            var volAccount = await _accountRepository.GetByIdAsync(volun.VolunteerId);
             if (volAccount == null)
             {
                 return new GetOdMsgResponseDto
