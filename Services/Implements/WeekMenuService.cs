@@ -36,6 +36,7 @@ namespace Elderly_Canteen.Services.Implements
 
             return weekStartDate;
         }
+        
         private string MapDayOfWeekToShortString(DayOfWeek dayOfWeek)
         {
             return dayOfWeek switch
@@ -66,18 +67,18 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
-            var weekDate = GetWeekStartDate(request.Date);
+            var weekDate = request.Date;
 
             // 获取当前日期所在周的周一
-            var dateNow = GetWeekStartDate(DateTime.Now);
+            var dateNow = DateTime.Now.Date;
 
             // 检查是否是过去的周
-            if (weekDate < dateNow)
+            if (weekDate <= dateNow)
             {
                 return new WmResponseDto
                 {
                     Success = false,
-                    Message = $"you can't add dish in the past week{weekDate}",
+                    Message = $"you can't add dish in the past",
                 };
             }
 
@@ -156,39 +157,40 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     Category = categoryName,
                     Id = weekMenu.DishId,
-                    Name = dish.DishName
+                    Name = dish.DishName,
+                    OriginalPrice = dish.Price,
+                    DiscountPrice = weekMenu.DisPrice == 0m ? dish.Price : weekMenu.DisPrice
                 };
 
                 // 根据 weekMenu.Day 的值将菜单项分类到对应的列表中
                 switch (weekMenu.Day)
                 {
                     case "Mon":
-                        response.Mon.Add(new Mon { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Mon.Add(new Mon { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name ,OriginalPrice=menuDto.OriginalPrice,DiscountPrice = menuDto.DiscountPrice});
                         break;
                     case "Tue":
-                        response.Tue.Add(new Tue { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Tue.Add(new Tue { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name, OriginalPrice = menuDto.OriginalPrice, DiscountPrice = menuDto.DiscountPrice });
                         break;
                     case "Wed":
-                        response.Wed.Add(new Wed { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Wed.Add(new Wed { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name, OriginalPrice = menuDto.OriginalPrice, DiscountPrice = menuDto.DiscountPrice });
                         break;
                     case "Thu":
-                        response.Thu.Add(new Thu { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Thu.Add(new Thu { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name, OriginalPrice = menuDto.OriginalPrice, DiscountPrice = menuDto.DiscountPrice });
                         break;
                     case "Fri":
-                        response.Fri.Add(new Fri { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Fri.Add(new Fri { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name, OriginalPrice = menuDto.OriginalPrice, DiscountPrice = menuDto.DiscountPrice });
                         break;
                     case "Sat":
-                        response.Sat.Add(new Sat { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Sat.Add(new Sat { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name, OriginalPrice = menuDto.OriginalPrice, DiscountPrice = menuDto.DiscountPrice });
                         break;
                     case "Sun":
-                        response.Sun.Add(new Sun { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name });
+                        response.Sun.Add(new Sun { Category = menuDto.Category, Id = menuDto.Id, Name = menuDto.Name, OriginalPrice = menuDto.OriginalPrice, DiscountPrice = menuDto.DiscountPrice });
                         break;
                 }
             }
 
             return response;
         }
-
 
         public async Task<Weekmenu> FindByCompositeAsync(string dishId, DateTime weekDate, string day)
         {
@@ -225,13 +227,28 @@ namespace Elderly_Canteen.Services.Implements
                     Message = "Dish not found"
                 };
             }
+            var weekDate = request.Date;
 
+            // 获取当前日期所在周的周一
+            var dateNow = DateTime.Now.Date;
+
+            // 检查是否是过去的周
+            if (weekDate <= dateNow)
+            {
+                return new WmResponseDto
+                {
+                    Success = false,
+                    Message = $"you can't delete dish in the past",
+                };
+            }
             var weekStartDate = GetWeekStartDate(request.Date);
             var weekEndDate = weekStartDate.AddDays(6);
 
+            
+
             var existedWM = await _weekMenuRepository.DeleteByConditionAsync(wm =>
                 wm.Week.Date == request.Date.Date && wm.DishId == dishId);
-
+          
             if (!existedWM)
             {
                 return new WmResponseDto
@@ -364,6 +381,7 @@ namespace Elderly_Canteen.Services.Implements
 
             return response;
         }
+        
         public async Task<AllDiscountResponseDto> GetAllDiscount(DateTime date)
         {
             // 计算当周的开始日期

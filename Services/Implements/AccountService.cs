@@ -304,26 +304,52 @@ namespace Elderly_Canteen.Services.Implements
                     response = null
                 };
             }
-
-            return new PersonInfoResponseDto
+            var senior = await _seniorRepository.GetByIdAsync(accountId);
+            if (senior != null)
             {
-                getSuccess = true,
-                msg = "获取成功",
-                response = new ResponseData
+                return new PersonInfoResponseDto
                 {
-                    accountId = account.Accountid,
-                    accountName = account.Accountname,
-                    phoneNum = account.Phonenum,
-                    identity = account.Identity,
-                    portrait = account.Portrait,
-                    gender = account.Gender,
-                    birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
-                    address = account.Address,
-                    name = account.Name,
-                    idCard = account.Idcard,
-                    money = account.Money,
-                }
-            };
+                    getSuccess = true,
+                    msg = "获取成功",
+                    response = new ResponseData
+                    {
+                        accountId = account.Accountid,
+                        accountName = account.Accountname,
+                        phoneNum = account.Phonenum,
+                        identity = account.Identity,
+                        portrait = account.Portrait,
+                        gender = account.Gender,
+                        birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
+                        address = account.Address,
+                        name = account.Name,
+                        idCard = account.Idcard,
+                        money = account.Money,
+                        subsidy = senior.Subsidy
+                    }
+                };
+            }
+            else
+            {
+                return new PersonInfoResponseDto
+                {
+                    getSuccess = true,
+                    msg = "获取成功",
+                    response = new ResponseData
+                    {
+                        accountId = account.Accountid,
+                        accountName = account.Accountname,
+                        phoneNum = account.Phonenum,
+                        identity = account.Identity,
+                        portrait = account.Portrait,
+                        gender = account.Gender,
+                        birthDate = account.Birthdate?.ToString("yyyy-MM-dd"),
+                        address = account.Address,
+                        name = account.Name,
+                        idCard = account.Idcard,
+                        money = account.Money,
+                    }
+                };
+            }
         }
 
         //修改个人信息逻辑
@@ -505,6 +531,9 @@ namespace Elderly_Canteen.Services.Implements
                 };
                
                 await _seniorRepository.AddAsync(senior);
+                account.Identity = "senior";
+                await _accountRepository.UpdateAsync(account);
+
                 return new AuthenticationResponseDto
                 {
                     success = true,

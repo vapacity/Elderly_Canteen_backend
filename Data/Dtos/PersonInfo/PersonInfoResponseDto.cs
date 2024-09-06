@@ -24,5 +24,6 @@
         public string? name { get; set; } // 姓名，可选
         public string? idCard { get; set; } // 姓名，可选
         public decimal money { get; set; }
+        public decimal? subsidy { get; set; }
     }
 }

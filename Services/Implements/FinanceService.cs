@@ -21,7 +21,7 @@ namespace Elderly_Canteen.Services.Implements
             _seniorRepository = seniorRepository;
         }
         //获取所有财务信息
-        public async Task<FinanceResponseDto> GetFilteredFinanceInfoAsync(string financeType = null, string inOrOut = null, string financeDate = null, string financeId = null, string accountId = null,string status=null)
+        public async Task<FinanceResponseDto> GetFilteredFinanceInfoAsync(string financeType = null, string inOrOut = null, string financeDate = null, string financeId = null, string accountId = null, string status = null)
         {
             var query = _financeRepository.GetAll();
 
@@ -63,7 +63,7 @@ namespace Elderly_Canteen.Services.Implements
                         msg = "日期格式不正确。请输入有效的日期时间字符串。"
                     };
                 }
-                
+
             }
             if (!string.IsNullOrEmpty(financeId))
             {
@@ -139,16 +139,18 @@ namespace Elderly_Canteen.Services.Implements
         {
             // 1. 获取用户信息
             var account = await _accountRepository.GetByIdAsync(accountId);
+            var senior = await _seniorRepository.GetByIdAsync(accountId);
             var identity = account.Identity;
             decimal money = account.Money;
             decimal bonus = 0m;
             if (identity == "senior")
             {
                 bonus = totalPrice * 0.2m;
-                var senior = await _seniorRepository.GetByIdAsync(accountId);
-                if (bonus < senior.Subsidy)
+                if (bonus > senior.Subsidy)
                     bonus = 0m;
                 totalPrice -= bonus;
+                senior.Subsidy -= bonus;
+                
             }
             // 2. 检查余额是否足够
             if (money < totalPrice)
@@ -177,7 +179,7 @@ namespace Elderly_Canteen.Services.Implements
                 Status = "待审核"
             };
             await _financeRepository.AddAsync(newFinance);
-
+            await _seniorRepository.UpdateAsync(senior);
             return new
             {
                 Success = true,
@@ -232,7 +234,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
-            var approvedFinances = finances.Where(f => f.Status == "已通过");
+            var approvedFinances = finances.Where(f => f.Status == "已通过"||f.Status == "通过");
             if (approvedFinances == null || !approvedFinances.Any())
             {
                 return new FinanceTotalsResponse

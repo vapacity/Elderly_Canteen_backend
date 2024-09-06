@@ -6,6 +6,7 @@
     using Elderly_Canteen.Data.Dtos.Order;
     using Elderly_Canteen.Data.Dtos.EmployeeInfo;
     using Elderly_Canteen.Data.Dtos.Register;
+    using System.Runtime.InteropServices;
 
     public class OrderService:IOrderService
     {
@@ -256,7 +257,7 @@
                     CusAddress = address ?? "error", // 根据业务逻辑填充
                     DeliverOrDining = deliver_or_dining,
                     DeliverStatus = deliver_or_dining ? "待接单" : "堂食", // 初始配送状态
-                    Money = totalPrice,
+                    Money = totalPrice - bonus,
                     OrderDishes = orderDishes,
                     Remark = order.Remark,
                     Status = order.Status,
@@ -298,7 +299,7 @@
             // 2. 如果没有记录，返回空的结果
             if (!financeList.Any())
             {
-                return new GetOrderResponseDto { Success = false, Msg = "没有历史订单", Response = Array.Empty<OrderItem>() };
+                return new GetOrderResponseDto { Success = true, Msg = "没有历史订单", Response = Array.Empty<OrderItem>() };
             }
 
             // 创建一个 List 来存储所有的 OrderItem
@@ -438,7 +439,7 @@
             {
                 return new GetOdMsgResponseDto
                 {
-                    Success = false,
+                    Success = true,
                     Msg = "没有志愿者接单"
                 };
             }
@@ -498,13 +499,15 @@
             foreach (var cartItem in cartItems)
             {
                 var dish = await _dishRepository.GetByIdAsync(cartItem.DishId);
+                var week = await _weekMenuRepository.FindByCompositeKeyAsync<Weekmenu>(cartItem.DishId, cartItem.Week);
+
                 if (dish != null)
                 {
                     orderDishes.Add(new OrderDish
                     {
                         DishName = dish.DishName,
                         Picture = dish.ImageUrl,
-                        Price = cartItem.Quantity * dish.Price, // 假设 Dish 表中的价格为单价
+                        Price = cartItem.Quantity * week.DisPrice, // 假设 Dish 表中的价格为单价
                         Quantity = cartItem.Quantity
                     });
                 }

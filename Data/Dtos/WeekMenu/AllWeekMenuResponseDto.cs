@@ -44,6 +44,12 @@
 
         [JsonProperty("name")]
         public string Name { get; set; }
+
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 
     public partial class Mon
@@ -56,6 +62,12 @@
 
         [JsonProperty("name")]
         public string Name { get; set; }
+
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 
     public partial class Sat
@@ -68,6 +80,12 @@
 
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
+
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 
     public partial class Sun
@@ -80,6 +98,12 @@
 
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
+
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 
     public partial class Thu
@@ -92,6 +116,12 @@
 
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
+
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 
     public partial class Tue
@@ -104,6 +134,11 @@
 
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 
     public partial class Wed
@@ -116,5 +151,11 @@
 
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
+
+        [JsonProperty("originalPrice")]
+        public decimal OriginalPrice { get; set; }
+
+        [JsonProperty("discountPrice")]
+        public decimal DiscountPrice { get; set; }
     }
 }
