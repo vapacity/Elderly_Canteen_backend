@@ -11,6 +11,7 @@ using Elderly_Canteen.Data.Dtos.AuthenticationDto;
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Tools;
 using Elderly_Canteen.Data.Dtos.OTP;
+using System.Collections.Generic;
 /*
  * 401
  */
@@ -51,15 +52,10 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromForm] RegisterRequestDto registerRequestDto, IFormFile avatar)
+        public async Task<IActionResult> Register(RegisterRequestDto registerRequestDto)
         {
             // 将头像文件传递给Service层进行处理
-            var result = await _accountService.RegisterAsync(registerRequestDto, avatar);
-
-            if (result.msg == "用户已存在")
-            {
-                return BadRequest(result);
-            }
+            var result = await _accountService.RegisterAsync(registerRequestDto);
 
             return Ok(result);
         }
@@ -110,16 +106,13 @@ namespace Elderly_Canteen.Controllers
             return Ok(response);
         }
 
-        [Authorize]
+ 
         [HttpPost("nameAuthenticate")]
         public async Task<IActionResult> NameAutenticate(AuthenticationRequestDto input)
         {
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var result = await _accountService.NameAuthentication(input, accountId);
-            if (result.success == false)
-            {
-                return BadRequest(result);
-            }
+            var result = await _accountService.NameAuthenticationBatchAsync(input);
+
             return Ok(result);
         }
 

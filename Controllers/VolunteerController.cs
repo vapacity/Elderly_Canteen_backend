@@ -24,14 +24,11 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("apply")]
-        [Authorize]
         public async Task<IActionResult> Apply(VolunteerApplicationDto application)
         {
-            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-  
             try
             {
-                await _volunteerService.ApplyAsync(application, accountId);
+                await _volunteerService.ApplyAsync(application);
 
                 return Ok(new { success = true, msg = "申请成功" });
             }
@@ -46,7 +43,6 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("getAllApply")]
-        [AuthorizeRole("admin")]
         public async Task<IActionResult> getAllApply()
         {
             var response = await _volunteerService.GetAllApplyAsync();
@@ -54,7 +50,6 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("applyInfo/{id}")]
-        [AuthorizeRole("admin")]
         public async Task<IActionResult> GetApplyInfo(string id)
         {
             var response = await _volunteerService.GetApplyInfoAsync(id);
@@ -62,7 +57,6 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpPost("review/{id}")]
-        [AuthorizeRole("admin")]
         [Authorize]
         public async Task<IActionResult> ReviewApplication(VolunteerReviewApplicationDto application,string id)
         {
@@ -108,7 +102,6 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpGet("getAll")]
-        [AuthorizeRole("admin")]
         public async Task<IActionResult> getAllVolunteer()
         {
             var response = await _volunteerService.GetAllVolunteerAsync();
@@ -116,7 +109,6 @@ namespace Elderly_Canteen.Controllers
         }
 
         [HttpDelete("del/{id}")]
-        [AuthorizeRole("admin")]
         [Authorize]
         public async Task<IActionResult> delVolunteer(string id)
         {

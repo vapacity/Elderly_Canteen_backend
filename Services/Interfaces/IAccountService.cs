@@ -12,10 +12,10 @@ namespace Elderly_Canteen.Services.Interfaces
     {
         //登录
         Task<LoginResponseDto> LoginAsync(LoginRequestDto loginRequest);
-        
+
         //注册
-        Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto, IFormFile avatar);
-        
+        Task<List<RegisterResponseDto>> RegisterAsync(RegisterRequestDto registerRequestDto);
+
         //获得个人信息
         Task<PersonInfoResponseDto> GetPersonInfoAsync(string account_id);
         
@@ -24,10 +24,9 @@ namespace Elderly_Canteen.Services.Interfaces
         
         //获得所有人的信息（调试用）
         Task<List<AccountDto>> GetAllAccountsAsync();
-        
+
         //实名认证
-        Task<AuthenticationResponseDto> NameAuthentication(AuthenticationRequestDto input, string accountId);
-        
+        Task<List<AuthenticationResponseDto>> NameAuthenticationBatchAsync(AuthenticationRequestDto input);
         //改密码
         Task<bool> VerifyPassword(string oldPassword, string accountId);
         

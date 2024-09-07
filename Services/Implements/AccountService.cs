@@ -211,84 +211,65 @@ namespace Elderly_Canteen.Services.Implements
             };
         }
 
-        //注册逻辑
-        public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto, IFormFile avatar)
+        public async Task<List<RegisterResponseDto>> RegisterAsync(RegisterRequestDto registerRequestDto)
         {
-            // 验证验证码
-            var verifyOtpResult = await VerifyOTPWithoutUserCheckAsync(new VerifyOTPRequestDto
-            {
-                PhoneNum = registerRequestDto.phone,
-                Code = registerRequestDto.verificationCode 
-            });
+            var responses = new List<RegisterResponseDto>();
 
-            if (!verifyOtpResult.Success)
+            foreach (var user in registerRequestDto.Users)
             {
-                return new RegisterResponseDto
+                // 检查用户是否存在
+                var existingAccount = await _accountRepository.GetAll()
+                    .FirstOrDefaultAsync(a => a.Phonenum == user.phone);
+
+                if (existingAccount != null)
                 {
-                    registerSuccess = false,
-                    msg = verifyOtpResult.Msg,
-                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                };
-            }
-
-            // 检查用户是否存在
-            var existingAccount = await _accountRepository.GetAll()
-                .FirstOrDefaultAsync(a => a.Phonenum == registerRequestDto.phone);
-
-            if (existingAccount != null)
-            {
-                return new RegisterResponseDto
-                {
-                    registerSuccess = false,
-                    msg = "用户已存在",
-                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                };
-            }
-            //处理哈希密码
-            PasswordHasher hasher = new PasswordHasher();
-            string hashedPassword = hasher.HashPasswordUsingSHA256(registerRequestDto.password);
-
-            var newAccount = new Account
-            {
-                Accountid = await GenerateAccountIdAsync(),
-                Accountname = registerRequestDto.userName,
-                Password = hashedPassword,
-                Phonenum = registerRequestDto.phone,
-                Identity = "user",
-                Gender = registerRequestDto.gender,
-                Birthdate = DateTime.TryParse(registerRequestDto.birthDate, out var birthdate) ? birthdate : (DateTime?)null
-            };
-
-            // 处理头像文件并生成路径
-            if (avatar != null)
-            {
-                // 上传图片到 OSS
-                var fileName = $"{newAccount.Accountid}-portrait.jpg";
-                var imageUrl = await _ossService.UploadFileAsync(avatar, fileName);
-                // 更新数据库中的图片 URL
-                newAccount.Portrait = imageUrl;  // 假设你在 Dish 实体中有一个 ImageUrl 属性
-            }
-            else
-            {
-                newAccount.Portrait = _ossService.GetDefaultImageUrl();
-            }
-            
-
-            await _accountRepository.AddAsync(newAccount);
-            var token = GenerateJwtToken(newAccount);
-            return new RegisterResponseDto
-            {
-                registerSuccess = true,
-                msg = "注册成功",
-                response = new RegisterResponse
-                {
-                    token = token,
-                    identity = "user",
-                    accountName = newAccount.Accountname,
-                    accountId = newAccount.Accountid,
+                    responses.Add(new RegisterResponseDto
+                    {
+                        registerSuccess = false,
+                        msg = $"用户 {user.phone} 已存在",
+                        timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    });
+                    continue; // 跳过已经存在的用户
                 }
-            };
+                // 处理哈希密码
+                PasswordHasher hasher = new PasswordHasher();
+                string hashedPassword = hasher.HashPasswordUsingSHA256(user.password);
+
+                var newAccount = new Account
+                {
+                    Accountid = await GenerateAccountIdAsync(),
+                    Accountname = user.userName,
+                    Password = hashedPassword,
+                    Phonenum = user.phone,
+                    Identity = "user",
+                    Gender = user.gender,
+                    Birthdate = DateTime.TryParse(user.birthDate, out var birthdate) ? birthdate : (DateTime?)null,
+                    Address = user.address,
+                    Idcard = user.idCard!=null? user.idCard:null,
+                    Name = user.name != null ? user.name:null
+                };
+
+                // 设置默认头像
+                newAccount.Portrait = _ossService.GetDefaultImageUrl();
+
+                // 添加新账号到数据库
+                await _accountRepository.AddAsync(newAccount);
+
+                // 生成 JWT Token
+                var token = GenerateJwtToken(newAccount);
+
+                // 添加成功响应
+                responses.Add(new RegisterResponseDto
+                {
+                    registerSuccess = true,
+                    msg = $"用户 {user.phone} 注册成功",
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                });
+            }
+
+            return responses;
         }
+
 
 
         //获得个人信息逻辑
@@ -452,71 +433,74 @@ namespace Elderly_Canteen.Services.Implements
             return responseList;
         }
 
-        //实名认证逻辑
-        public async Task<AuthenticationResponseDto> NameAuthentication(AuthenticationRequestDto input,string accountId)
+        public async Task<List<AuthenticationResponseDto>> NameAuthenticationBatchAsync(AuthenticationRequestDto input)
         {
-            var account = await _accountRepository.GetByIdAsync(accountId);
-            if (account == null)
+            var authenticationResults = new List<AuthenticationResponseDto>();
+
+            foreach (var vol in input.Vols)
             {
-                return new AuthenticationResponseDto
+                var account = await _accountRepository.GetByIdAsync(vol.accountId);
+                if (account == null)
                 {
-                    success = false,
-                    msg = "账户不存在"
-                };
-            }
-            if (account.Idcard != null)
-            {
-                if (account.Idcard.Length != 18)
-                {
-                    return new AuthenticationResponseDto
+                    authenticationResults.Add(new AuthenticationResponseDto
                     {
                         success = false,
-                        msg = "身份证号格式不正确"
-                    };  // 如果身份证号码为空或长度不是18，则返回错误信息
+                        msg = $"账户 {vol.accountId} 不存在"
+                    });
+                    continue; // 跳过当前循环，继续下一个账号的处理
                 }
-                return new AuthenticationResponseDto
+
+
+
+                // 检查身份证是否已被使用
+                var existedIdCard = await _accountRepository.GetAll()
+                   .FirstOrDefaultAsync(a => a.Idcard == vol.idCard && a.Accountid != vol.accountId);
+                if (existedIdCard!=null)
                 {
-                    success = false,
-                    msg = "已实名认证"
-                };
+                    authenticationResults.Add(new AuthenticationResponseDto
+                    {
+                        success = false,
+                        msg = $"账户 {vol.accountId} 的身份证号已被注册"
+                    });
+                    continue;
+                }
+
+                // 进行认证操作
+                DateTime birthDate = ExtractBirthDateFromID(account.Idcard);
+
+                // 如果是老人身份
+                if (account.Identity != "admin" && CalculateAge(birthDate) >= 60)
+                {
+                    var senior = new Senior
+                    {
+                        AccountId = account.Accountid,
+                        FamilyNum = account.Phonenum,
+                        Subsidy = 50
+                    };
+                    await _seniorRepository.AddAsync(senior);
+
+                    account.Identity = "senior";
+                    await _accountRepository.UpdateAsync(account);
+                    authenticationResults.Add(new AuthenticationResponseDto
+                    {
+                        success = true,
+                        msg = $"账户 {vol.accountId} 老人身份认证成功"
+                    });
+                }
+                else
+                {
+                    authenticationResults.Add(new AuthenticationResponseDto
+                    {
+                        success = true,
+                        msg = $"账户 {vol.accountId} 普通用户认证成功"
+                    });
+                }
             }
-            var existedIdCard = await _accountRepository.FindByConditionAsync(account => account.Idcard == input.idCard);
-            if (existedIdCard.Any())
-            {
-                return new AuthenticationResponseDto
-                {
-                    success = false,
-                    msg = "该身份已被注册"
-                };
-            }
-            account.Name = input.name;
-            account.Idcard = input.idCard;
-            DateTime date = ExtractBirthDateFromID(account.Idcard);
-            account.Birthdate = date;
-            await _accountRepository.UpdateAsync(account);
-            if (account.Identity!="admin"&&CalculateAge(date) >= 60)
-            {
-                var senior = new Senior
-                {
-                    AccountId = account.Accountid,
-                    FamilyNum = account.Phonenum,
-                    Subsidy = 50
-                };
-               
-                await _seniorRepository.AddAsync(senior);
-                return new AuthenticationResponseDto
-                {
-                    success = true,
-                    msg = "老人身份认证成功"
-                };
-            }
-        
-                return new AuthenticationResponseDto
-            {
-                success = true,
-                msg = "普通用户认证成功"
-            };
+
+            return authenticationResults; // 返回批量处理的结果列表
         }
+
+
         // 从身份证号码中提取出生日期
         public static DateTime ExtractBirthDateFromID(string idNumber)
         {

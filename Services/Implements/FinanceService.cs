@@ -232,7 +232,7 @@ namespace Elderly_Canteen.Services.Implements
                 };
             }
 
-            var approvedFinances = finances.Where(f => f.Status == "已通过");
+            var approvedFinances = finances.Where(f => f.Status == "已通过"|| f.Status == "通过");
             if (approvedFinances == null || !approvedFinances.Any())
             {
                 return new FinanceTotalsResponse

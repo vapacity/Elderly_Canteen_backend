@@ -5,7 +5,7 @@ namespace Elderly_Canteen.Services.Interfaces
 {
     public interface IVolunteerService
     {
-        Task ApplyAsync(VolunteerApplicationDto application, string accountId);
+        Task ApplyAsync(VolunteerApplicationDto application);
 
         Task<VolunteerReviewListDto> GetAllApplyAsync();
 

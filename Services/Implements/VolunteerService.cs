@@ -35,52 +35,67 @@ namespace Elderly_Canteen.Services.Implements
             _seniorRepository = seniorRepository;
         }
 
-        //志愿者申请
-        public async Task ApplyAsync(VolunteerApplicationDto application, string accountId)
+        // 批量志愿者申请
+        public async Task ApplyAsync(VolunteerApplicationDto application)
         {
-            var account = await _accountRepository.GetByIdAsync(accountId);
-            if (account == null)
+            foreach (var volunteer in application.Vols)
             {
-                throw new InvalidOperationException("用户不存在");
-            }
-            if (account.Idcard == null)
-            {
-                throw new InvalidOperationException("用户未实名认证");
-            }
-            var vol = await _volunteerRepository.GetByIdAsync(accountId);
-            if (vol != null)
-            {
-                throw new InvalidOperationException("用户已是志愿者");
-            }
-            var senior = await _seniorRepository.GetByIdAsync(accountId);
-            if (senior != null)
-            {
-                throw new InvalidOperationException("60岁以上老人不能申请志愿者");
-            }
+                var accountId = volunteer.accountId;
 
-            var applyList = await _applicationRepository.FindByConditionAsync(e => e.AccountId == accountId);
-            if (applyList != null && applyList.Any())
-            {
-                foreach (var apply in applyList)
+                // 验证用户是否存在
+                var account = await _accountRepository.GetByIdAsync(accountId);
+                if (account == null)
                 {
-                    var rev = await _reviewRepository.FindByConditionAsync(e => e.ApplicationId == apply.ApplicationId);
-                    if (!rev.Any()) // 如果没有找到对应的审核记录
+                    throw new InvalidOperationException($"用户 {accountId} 不存在");
+                }
+
+                // 验证用户是否实名认证
+                if (account.Idcard == null)
+                {
+                    throw new InvalidOperationException($"用户 {accountId} 未实名认证");
+                }
+
+                // 验证用户是否已是志愿者
+                var vol = await _volunteerRepository.GetByIdAsync(accountId);
+                if (vol != null)
+                {
+                    throw new InvalidOperationException($"用户 {accountId} 已是志愿者");
+                }
+
+                // 验证用户是否为60岁以上老人
+                var senior = await _seniorRepository.GetByIdAsync(accountId);
+                if (senior != null)
+                {
+                    throw new InvalidOperationException($"用户 {accountId} 为60岁以上老人，不能申请志愿者");
+                }
+
+                // 验证是否存在未审核的申请
+                var applyList = await _applicationRepository.FindByConditionAsync(e => e.AccountId == accountId);
+                if (applyList != null && applyList.Any())
+                {
+                    foreach (var apply in applyList)
                     {
-                        throw new InvalidOperationException("用户上次申请还未审核");
+                        var rev = await _reviewRepository.FindByConditionAsync(e => e.ApplicationId == apply.ApplicationId);
+                        if (!rev.Any()) // 如果没有找到对应的审核记录
+                        {
+                            throw new InvalidOperationException($"用户 {accountId} 上次申请还未审核");
+                        }
                     }
                 }
+
+                // 创建新的志愿者申请
+                var newApplication = new VolApplication
+                {
+                    ApplicationId = await GenerateApplicationIdAsync(),
+                    AccountId = accountId,
+                    SelfStatement = volunteer.selfStatement,
+                    ApplicationDate = DateTime.Now
+                };
+
+                await _applicationRepository.AddAsync(newApplication);
             }
-
-            var newApplication = new VolApplication
-            {
-                ApplicationId = await GenerateApplicationIdAsync(),
-                AccountId = accountId,
-                SelfStatement = application.selfStatement,
-                ApplicationDate = DateTime.Now
-            };
-
-            await _applicationRepository.AddAsync(newApplication);
         }
+
 
         //获得所有未审核申请逻辑
         public async Task<VolunteerReviewListDto> GetAllApplyAsync()
@@ -209,7 +224,7 @@ namespace Elderly_Canteen.Services.Implements
         {
             var account = await _accountRepository.GetByIdAsync(accountId);
             if (account == null) {
-                throw new InvalidOperationException($"ID为 {id} 的用户不存在");
+                throw new InvalidOperationException($"管理员不存在{accountId}");
             }
 
             var apply = await _applicationRepository.GetByIdAsync(id);

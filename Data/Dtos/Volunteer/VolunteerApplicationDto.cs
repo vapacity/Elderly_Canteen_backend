@@ -2,9 +2,16 @@
 {
     public class VolunteerApplicationDto
     {
-        public string selfStatement { get; set; }
+        public List<VolunteerApplyDto> Vols { get; set; } = new List<VolunteerApplyDto>();
     }
 
+
+        public class VolunteerApplyDto
+        {
+            public string accountId { set; get; }
+            public string? selfStatement { set; get; }
+        }
+    
     public class VolunteerReviewApplicationDto
     {
         public string reason { get; set; }
