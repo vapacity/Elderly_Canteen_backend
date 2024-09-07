@@ -17,6 +17,7 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IOrderService _orderService;
         private readonly IFinanceService _financeService;
         private readonly IRepoService _repoService;
+        private readonly ILogService _logService;
         private readonly INotificationService _notificationService;
         private readonly ModelContext _dbContext;
         public CartService(IGenericRepository<Cart> cartRepository,
@@ -27,6 +28,7 @@ namespace Elderly_Canteen.Services.Implements
             IOrderService orderService,
             IFinanceService financeService,
             IRepoService repoService,
+            ILogService logService,
             INotificationService notificationService,
             ModelContext dbContext,
             IGenericRepository<Dish> dishRepository)
@@ -41,6 +43,7 @@ namespace Elderly_Canteen.Services.Implements
             _repoService = repoService;
             _notificationService = notificationService;
             _dbContext = dbContext;
+            _logService = logService;
             _dishRepository = dishRepository;
         }
         private async Task<Cart> IsCartValid(string cartId, string accountId)
@@ -586,6 +589,7 @@ namespace Elderly_Canteen.Services.Implements
                 // 删除购物车本身
                 await _cartRepository.DeleteAsync(cart.CartId);
             }
+            await _logService.LogAsync("Safe", "过期购物车已删除");
         }
 
 

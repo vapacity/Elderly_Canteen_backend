@@ -75,6 +75,8 @@ public partial class ModelContext : DbContext
 
     public virtual DbSet<Weekmenu> Weekmenus { get; set; }
 
+    public virtual DbSet<SystemLog> SystemLogs { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseOracle("User Id=ELDERLY_CANTEEN;Password=CANTEEN_PASSWORD;Data Source=124.220.16.200:1521/xe");
@@ -1109,6 +1111,35 @@ public partial class ModelContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("STATUS");
         });
+        modelBuilder.Entity<SystemLog>(entity =>
+        {
+            entity
+                .HasKey(e => e.LogId)
+                .HasName("PK_SYSTEMLOGS");  // 可选: 设置主键名称
+
+            entity.ToTable("SYSTEMLOGS");
+
+            entity.Property(e => e.LogId)
+                .HasColumnType("NUMBER")
+                .HasColumnName("LOGID");
+
+            entity.Property(e => e.LogLevel)
+                .IsRequired()
+                .HasMaxLength(50)  // 假设LogLevel字段最多50字符
+                .IsUnicode(false)
+                .HasColumnName("LOGLEVEL");
+
+            entity.Property(e => e.Message)
+                .HasMaxLength(4000)
+                .IsUnicode(false)
+                .HasColumnName("MESSAGE");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("TIMESTAMP")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("CREATEDAT");
+        });
+
 
         modelBuilder.Entity<Weekmenu>(entity =>
         {

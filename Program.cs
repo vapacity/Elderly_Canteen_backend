@@ -76,7 +76,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFinanceService, FinanceService>();
 builder.Services.AddScoped<IVolServeService, VolServeService>();
-
+builder.Services.AddScoped<ILogService, LogService>();
 // JWT 身份验证
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);

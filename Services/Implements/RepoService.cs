@@ -19,7 +19,9 @@ namespace Elderly_Canteen.Services.Implements
         private readonly IGenericRepository<Restock> _restockRepository;
         private readonly IGenericRepository<Administrator> _administratorRepository;
         private readonly IGenericRepository<Weekmenu> _weekMenuRepository;
+        private readonly IGenericRepository<Dish> _dishRepository;
         private readonly INotificationService _notificationService;
+        private readonly ILogService _logService;
         private readonly ModelContext _context;
 
         public RepoService(IGenericRepository<Repository> repoRepository, 
@@ -29,7 +31,9 @@ namespace Elderly_Canteen.Services.Implements
             IGenericRepository<Administrator> administratorRepository,
             IGenericRepository<Weekmenu> weekMenuRepository,
             IGenericRepository<Formula> formulaRepository,
+            IGenericRepository<Dish> dishRepository,
         INotificationService notificationService,
+        ILogService logService,
         ModelContext context)
         {
             _repoRepository = repoRepository;
@@ -40,7 +44,9 @@ namespace Elderly_Canteen.Services.Implements
             _weekMenuRepository = weekMenuRepository;
             _notificationService = notificationService;
             _formulaRepository = formulaRepository;
+            _dishRepository = dishRepository;
             _context = context;
+            _logService = logService;
         }
 
         public async Task<AllRepoResponseDto> GetRepo(string? name)
@@ -69,7 +75,7 @@ namespace Elderly_Canteen.Services.Implements
                 {
                     query = query.Where(dto => dto.IngredientName.Contains(name, StringComparison.OrdinalIgnoreCase));
                 }
-
+                query = query.OrderBy(dto => dto.Expiry);
                 var ingredientsList = query.ToList();
 
                 return new AllRepoResponseDto
@@ -449,7 +455,7 @@ namespace Elderly_Canteen.Services.Implements
                     IngredientId = r.IngredientId,
                     IngredientName = ingredients.TryGetValue(r.IngredientId, out var ingredient) ? ingredient.IngredientName : "Unknown",
                     Price = r.Price
-                }).ToList();
+                }).OrderByDescending(r=>r.Date).ToList();
 
                 // 返回成功的响应
                 return new AllRestockResponseDto
@@ -546,17 +552,24 @@ namespace Elderly_Canteen.Services.Implements
             {
                 return false;
             }
-
+            var dish = await _dishRepository.GetByIdAsync(dishId);
+            
             // 7. 库存充足，减少库存，这里需要使用锁以确保线程安全
             // 使用乐观锁或数据库事务来确保库存的准确性
             wkmu.Stock -= quantity;
             wkmu.Sales += quantity;
             // 8. 如果减少后的库存低于或等于10，触发低库存通知
-            if (wkmu.Stock <= 10)
+            if (wkmu.Stock < 10 && wkmu.Stock>0)
             {
                 // 调用通知服务发送低库存警告
                 // 尚未实现
-                _notificationService.NotifyLowStock(dishId);
+                await _logService.LogAsync("Warning", $"今日菜品{wkmu.DishId}库存不足10份,目前为{wkmu.Stock}份，请及时补货");
+
+                
+            }
+            else if(wkmu.Stock == 0)
+            {
+                await _logService.LogAsync("Danger", $"今日菜品{wkmu.DishId}已售罄，请及时补货！！");
             }
 
             // 9. 更新库存信息
@@ -588,11 +601,15 @@ namespace Elderly_Canteen.Services.Implements
                         if (maxPortions < 50)
                         {
                             weekMenu.Stock = maxPortions;
+                            var dish = await _dishRepository.GetByIdAsync(weekMenu.DishId);
+                            await _logService.LogAsync("Warning", $"今日配料库存不足，{dish.DishName} 的库存调整为 {maxPortions} 份");
                             Console.WriteLine($"库存不足，{weekMenu.DishId} 的库存调整为 {maxPortions} 份");
                         }
                         else
                         {
                             weekMenu.Stock = 50;
+                            var dish = await _dishRepository.GetByIdAsync(weekMenu.DishId);
+                            await _logService.LogAsync("Safe", $"{dish.DishName} 的库存已自动设置为{maxPortions} 份");
                         }
                     }
 
@@ -639,7 +656,8 @@ namespace Elderly_Canteen.Services.Implements
                 // 删除过期食材
                 if (ingredient.ExpirationTime <= DateTime.Now.AddDays(7))
                 {
-                    _notificationService.NotifyExpiringSoon(ingredient.IngredientId, ingredient.ExpirationTime);
+                    var ingredientName = await _ingreRepository.GetByIdAsync(ingredient.IngredientId);
+                    await _logService.LogAsync("Warning", $"食材{ingredientName.IngredientName}存在即将过期部分");
                 }
             }
         }
@@ -736,5 +754,70 @@ namespace Elderly_Canteen.Services.Implements
             return true;
         }
 
+        public async Task<bool> RecalculateHighConsumption()
+        {
+            try
+            {
+                // 从 restock 表中获取所有记录
+                var restocks = await _context.Restocks.ToListAsync();
+
+                // 按 IngredientId 分组，计算每种食材的总进货数量
+                var ingredientRestockTotals = restocks
+                    .GroupBy(r => r.IngredientId)
+                    .Select(group => new
+                    {
+                        IngredientId = group.Key,
+                        TotalQuantity = group.Sum(r => r.Quantity)
+                    })
+                    .ToList();
+
+                // 计算所有进货记录的总进货数量
+                var totalQuantity = ingredientRestockTotals.Sum(ir => ir.TotalQuantity);
+
+                // 遍历每个 IngredientId，计算高耗材百分比
+                foreach (var ingredientRestock in ingredientRestockTotals)
+                {
+                    var percentage = (ingredientRestock.TotalQuantity / (decimal)totalQuantity) * 100;
+
+                    byte highConsumptionValue;
+
+                    if (percentage <= 20)
+                        highConsumptionValue = 1;
+                    else if (percentage <= 40)
+                        highConsumptionValue = 2;
+                    else if (percentage <= 60)
+                        highConsumptionValue = 3;
+                    else if (percentage <= 80)
+                        highConsumptionValue = 4;
+                    else
+                        highConsumptionValue = 5;
+
+
+                    // 使用 repository 查找对应的 Ingredient 并更新 highConsumption 值
+                    var ingredientsToUpdate = await _repoRepository.FindByConditionAsync(i => i.IngredientId == ingredientRestock.IngredientId);
+
+                    foreach (var ingredient in ingredientsToUpdate)
+                    {
+                        ingredient.HighConsumption = highConsumptionValue;
+                        await _repoRepository.UpdateAsync(ingredient);
+                    }
+                    await _logService.LogAsync("Safe", "已更新仓库中的高消耗属性");
+                }
+
+                // 保存所有更改
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // 错误处理，可以记录日志或返回错误信息
+                Console.WriteLine($"An error occurred while recalculating high consumption: {ex.Message}");
+                return false;
+            }
+        }
+
     }
+
 }
+

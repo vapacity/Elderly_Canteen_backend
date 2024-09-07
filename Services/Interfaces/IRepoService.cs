@@ -25,5 +25,7 @@ namespace Elderly_Canteen.Services.Interfaces
 
         // 计算当前能制作的dish的最大份数
         Task<int> CalculateMaxPortionsAsync(string dishId, int requestedQuantity = 50);
+
+        Task<bool> RecalculateHighConsumption();
     }
 }

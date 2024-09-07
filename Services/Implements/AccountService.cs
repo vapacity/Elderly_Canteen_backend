@@ -270,7 +270,7 @@ namespace Elderly_Canteen.Services.Implements
             }
             else
             {
-                newAccount.Portrait = _ossService.GetDefaultImageUrl();
+                newAccount.Portrait = _ossService.GetDefaultProtrateUrl();
             }
             
 

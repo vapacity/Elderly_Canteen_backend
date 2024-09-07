@@ -20,7 +20,7 @@ namespace Elderly_Canteen.Services.Implements
 
             
             var now = DateTime.Now;
-            var scheduledTime = new DateTime(now.Year, now.Month, now.Day, 1, 50,0); 
+            var scheduledTime = new DateTime(now.Year, now.Month, now.Day, 2, 36,20); 
             if (now > scheduledTime)
             {
                 scheduledTime = scheduledTime.AddDays(1); // 如果当前时间已过22点，定时到明天晚上22点
@@ -49,6 +49,8 @@ namespace Elderly_Canteen.Services.Implements
                 // 删除过期购物车
 
                 cartService.DeleteUnassociatedCartsAsync().GetAwaiter().GetResult();
+
+                stockService.RecalculateHighConsumption().GetAwaiter().GetResult();
             }
         }
 

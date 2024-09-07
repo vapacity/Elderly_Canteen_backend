@@ -43,7 +43,7 @@ namespace Elderly_Canteen.Services.Implements
                     {
                         IngredientId = ing.IngredientId,
                         IngredientName = ing.IngredientName,
-                    })
+                    }).OrderBy(ing => ing.IngredientId)
                     .ToList();
 
                 return new AllIngreResponseDto
