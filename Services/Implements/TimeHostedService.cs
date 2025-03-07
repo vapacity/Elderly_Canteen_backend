@@ -20,7 +20,7 @@ namespace Elderly_Canteen.Services.Implements
 
             
             var now = DateTime.Now;
-            var scheduledTime = new DateTime(now.Year, now.Month, now.Day, 2, 36,20); 
+            var scheduledTime = new DateTime(now.Year, now.Month, now.Day, 10, 23,00); 
             if (now > scheduledTime)
             {
                 scheduledTime = scheduledTime.AddDays(1); // 如果当前时间已过22点，定时到明天晚上22点

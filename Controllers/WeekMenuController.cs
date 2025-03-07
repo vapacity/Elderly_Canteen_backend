@@ -25,7 +25,7 @@ namespace Elderly_Canteen.Controllers
             {
                 return BadRequest();
             }
-            var response =await _wmService.AddWM(request);
+            var response = await _wmService.AddWM(request);
             if (response.Success == false)
             {
                 return BadRequest(response);
@@ -60,7 +60,7 @@ namespace Elderly_Canteen.Controllers
             if (date == null)
             {
                 return BadRequest();
-            
+
             }
             var response = await _wmService.GetWeekMenuByDateAsync(date);
             if (response == null)

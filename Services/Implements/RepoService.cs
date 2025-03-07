@@ -32,9 +32,9 @@ namespace Elderly_Canteen.Services.Implements
             IGenericRepository<Weekmenu> weekMenuRepository,
             IGenericRepository<Formula> formulaRepository,
             IGenericRepository<Dish> dishRepository,
-        INotificationService notificationService,
-        ILogService logService,
-        ModelContext context)
+            INotificationService notificationService,
+            ILogService logService,
+            ModelContext context)
         {
             _repoRepository = repoRepository;
             _ingreRepository = ingreRepository;
@@ -172,6 +172,7 @@ namespace Elderly_Canteen.Services.Implements
                     success = false
                 };
             }
+
             // 查找要更新的 Ingredient 实体
             var existedIngre = await _ingreRepository.GetByIdAsync(ingreId);
             if (existedIngre == null)
@@ -563,13 +564,13 @@ namespace Elderly_Canteen.Services.Implements
             {
                 // 调用通知服务发送低库存警告
                 // 尚未实现
-                await _logService.LogAsync("Warning", $"今日菜品{wkmu.DishId}库存不足10份,目前为{wkmu.Stock}份，请及时补货");
+                await _logService.LogAsync("Warning", $"今日菜品 {dish.DishName} 库存不足10份,目前为{wkmu.Stock}份，请及时补货");
 
                 
             }
             else if(wkmu.Stock == 0)
             {
-                await _logService.LogAsync("Danger", $"今日菜品{wkmu.DishId}已售罄，请及时补货！！");
+                await _logService.LogAsync("Danger", $"今日菜品 {dish.DishName} 已售罄，请及时补货！！");
             }
 
             // 9. 更新库存信息
@@ -590,7 +591,7 @@ namespace Elderly_Canteen.Services.Implements
                     string today = MapDayOfWeekToShortString(DateTime.Now.DayOfWeek);
 
                     // 2. 获取所有当天的 WeekMenu 项目
-                    var weekMenus = await _weekMenuRepository.FindByConditionAsync(w => w.Week == DateTime.Now.Date.AddDays(1));
+                    var weekMenus = await _weekMenuRepository.FindByConditionAsync(w => w.Week == DateTime.Now.Date);
 
                     foreach (var weekMenu in weekMenus)
                     {
@@ -602,32 +603,39 @@ namespace Elderly_Canteen.Services.Implements
                         {
                             weekMenu.Stock = maxPortions;
                             var dish = await _dishRepository.GetByIdAsync(weekMenu.DishId);
-                            await _logService.LogAsync("Warning", $"今日配料库存不足，{dish.DishName} 的库存调整为 {maxPortions} 份");
-                            Console.WriteLine($"库存不足，{weekMenu.DishId} 的库存调整为 {maxPortions} 份");
+                            if (maxPortions == 0)
+                                await _logService.LogAsync("Dangerous", $"今日配料库存不足，{dish.DishName} 的库存为零");
+                            else
+                            {
+                                await _logService.LogAsync("Warning", $"今日配料库存不足，{dish.DishName} 的库存减为 {weekMenu.Stock} 份");
+                            }
+                            Console.WriteLine($"库存不足，{weekMenu.DishId} 的库存调整为 {weekMenu.Stock} 份");
                         }
                         else
                         {
                             weekMenu.Stock = 50;
                             var dish = await _dishRepository.GetByIdAsync(weekMenu.DishId);
-                            await _logService.LogAsync("Safe", $"{dish.DishName} 的库存已自动设置为{maxPortions} 份");
+                            await _logService.LogAsync("Safe", $"{dish.DishName} 的库存已自动设置为 50 份");
                         }
-                    }
-
-                    // 5. 更新 WeekMenu 中的库存
-                    foreach (var weekMenu in weekMenus)
-                    {
                         await _weekMenuRepository.UpdateAsync(weekMenu);
-                    }
-
-                    // 6. 减少 repository 中的食材库存
-                    foreach (var weekMenu in weekMenus)
-                    {
                         bool success = await ReduceIngredientStockAsync(weekMenu.DishId, weekMenu.Stock);
                         if (!success)
                         {
                             throw new Exception($"库存减少失败，无法支持 {weekMenu.Stock} 份 {weekMenu.DishId}");
                         }
                     }
+
+/*                    // 5. 更新 WeekMenu 中的库存
+                    foreach (var weekMenu in weekMenus)
+                    {
+                        
+                    }
+
+                    // 6. 减少 repository 中的食材库存
+                    foreach (var weekMenu in weekMenus)
+                    {
+                        
+                    }*/
 
                     // 7. 提交事务
                     await transaction.CommitAsync();
@@ -801,12 +809,12 @@ namespace Elderly_Canteen.Services.Implements
                         ingredient.HighConsumption = highConsumptionValue;
                         await _repoRepository.UpdateAsync(ingredient);
                     }
-                    await _logService.LogAsync("Safe", "已更新仓库中的高消耗属性");
+                    
                 }
 
                 // 保存所有更改
                 await _context.SaveChangesAsync();
-
+                await _logService.LogAsync("Safe", "已更新仓库中的高消耗属性");
                 return true;
             }
             catch (Exception ex)

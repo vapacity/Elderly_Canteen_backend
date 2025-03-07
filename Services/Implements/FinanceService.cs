@@ -100,7 +100,7 @@ namespace Elderly_Canteen.Services.Implements
                 AdministratorId = finance.AdministratorId,
                 Proof = finance.Proof,
                 Status = finance.Status
-            }).ToList();
+            }).OrderByDescending(finance=>finance.FinanceDate).ToList();
 
             return new FinanceResponseDto
             {
@@ -179,7 +179,11 @@ namespace Elderly_Canteen.Services.Implements
                 Status = "待审核"
             };
             await _financeRepository.AddAsync(newFinance);
-            await _seniorRepository.UpdateAsync(senior);
+            if(identity == "senior")
+            {
+                await _seniorRepository.UpdateAsync(senior);
+            }
+            
             return new
             {
                 Success = true,

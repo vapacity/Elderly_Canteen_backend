@@ -1,5 +1,6 @@
 ﻿using Elderly_Canteen.Data.Dtos.EmployeeInfo;
 using Elderly_Canteen.Data.Dtos.PersonInfo;
+using Elderly_Canteen.Filter;
 using Elderly_Canteen.Services.Implements;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 namespace Elderly_Canteen.Controllers
 {
     [ApiController]
+    [AuthorizeRole("admin")]
     [Route("api/[controller]")]
     public class EmployeeController : ControllerBase
     {

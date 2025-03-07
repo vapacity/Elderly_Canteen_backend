@@ -1,4 +1,5 @@
 ﻿using Elderly_Canteen.Data.Entities;
+using Elderly_Canteen.Filter;
 using Elderly_Canteen.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,8 @@ using System.Security.Claims;
 namespace Elderly_Canteen.Controllers
 {
     [ApiController]
+    [Authorize]
+    [AuthorizeRole("admin")]
     [Route("api/[controller]")]
     public class FinanceController : ControllerBase
     {
